@@ -46,12 +46,14 @@ def main(args):
     print("path_id:", path_id, "path:", path)
     os.makedirs(path, exist_ok=True)
  
-    tts_output="output.wav"
+    tts_output= "output.wav"
     
     print("-----------------------------------------")
     print("generating speech")
     generate_speech(path_id, tts_output, message,input_voice, input_lang)
     print("\ngenerating speech:", tts_output)
+    
+    tts_audio= os.path.join(path,"output.wav")
 
 
     pic_path = args.source_image

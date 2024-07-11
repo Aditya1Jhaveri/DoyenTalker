@@ -21,3 +21,4 @@ av
 safetensors
 kornia
 scipy
+gdown
