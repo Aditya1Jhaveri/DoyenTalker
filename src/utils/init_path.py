@@ -17,8 +17,11 @@ def init_path(checkpoint_dir, config_dir, size=512, old_version=False, preproces
     elif len(glob.glob(os.path.join(checkpoint_dir, '*.safetensors'))):
         print('using safetensor as default')
         doyentalker_paths = {
-            "checkpoint":os.path.join(checkpoint_dir, 'doyenTalker_V0.0.2_'+str(size)+'.safetensors'),
-            }
+            "checkpoint" : "",
+        }
+        # doyentalker_paths = {
+        #     "checkpoint":os.path.join(checkpoint_dir, 'doyenTalker_V0.0.2_'+str(size)+'.safetensors'),
+        #     }
         use_safetensor = True
     else:
         print("WARNING: The new version of the model will be updated by safetensor, you may need to download it mannully. We run the old version of the checkpoint this time!")
