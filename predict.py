@@ -19,24 +19,24 @@ class Predictor(BasePredictor):
         device = "cuda"
 
         
-        sadtalker_paths = init_path(checkpoints,os.path.join("src","config"))
+        doyentalker_paths = init_path(checkpoints,os.path.join("src","config"))
 
         # init model
-        self.preprocess_model = CropAndExtract(sadtalker_paths, device
+        self.preprocess_model = CropAndExtract(doyentalker_paths, device
         )
 
         self.audio_to_coeff = Audio2Coeff(
-            sadtalker_paths,
+            doyentalker_paths,
             device,
         )
 
         self.animate_from_coeff = {
             "full": AnimateFromCoeff(
-                sadtalker_paths,
+                doyentalker_paths,
                 device,
             ),
             "others": AnimateFromCoeff(
-                sadtalker_paths,
+                doyentalker_paths,
                 device,
             ),
         }

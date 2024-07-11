@@ -24,12 +24,12 @@ def load_cpk(checkpoint_path, model=None, optimizer=None, device="cpu"):
 
 class Audio2Coeff():
 
-    def __init__(self, sadtalker_path, device):
+    def __init__(self, doyentalker_path, device):
         #load config
-        fcfg_pose = open(sadtalker_path['audio2pose_yaml_path'])
+        fcfg_pose = open(doyentalker_path['audio2pose_yaml_path'])
         cfg_pose = CN.load_cfg(fcfg_pose)
         cfg_pose.freeze()
-        fcfg_exp = open(sadtalker_path['audio2exp_yaml_path'])
+        fcfg_exp = open(doyentalker_path['audio2exp_yaml_path'])
         cfg_exp = CN.load_cfg(fcfg_exp)
         cfg_exp.freeze()
 
@@ -41,11 +41,11 @@ class Audio2Coeff():
             param.requires_grad = False 
         
         try:
-            if sadtalker_path['use_safetensor']:
-                checkpoints = safetensors.torch.load_file(sadtalker_path['checkpoint'])
+            if doyentalker_path['use_safetensor']:
+                checkpoints = safetensors.torch.load_file(doyentalker_path['checkpoint'])
                 self.audio2pose_model.load_state_dict(load_x_from_safetensor(checkpoints, 'audio2pose'))
             else:
-                load_cpk(sadtalker_path['audio2pose_checkpoint'], model=self.audio2pose_model, device=device)
+                load_cpk(doyentalker_path['audio2pose_checkpoint'], model=self.audio2pose_model, device=device)
         except:
             raise Exception("Failed in loading audio2pose_checkpoint")
 
@@ -56,11 +56,11 @@ class Audio2Coeff():
             netG.requires_grad = False
         netG.eval()
         try:
-            if sadtalker_path['use_safetensor']:
-                checkpoints = safetensors.torch.load_file(sadtalker_path['checkpoint'])
+            if doyentalker_path['use_safetensor']:
+                checkpoints = safetensors.torch.load_file(doyentalker_path['checkpoint'])
                 netG.load_state_dict(load_x_from_safetensor(checkpoints, 'audio2exp'))
             else:
-                load_cpk(sadtalker_path['audio2exp_checkpoint'], model=netG, device=device)
+                load_cpk(doyentalker_path['audio2exp_checkpoint'], model=netG, device=device)
         except:
             raise Exception("Failed in loading audio2exp_checkpoint")
         self.audio2exp_model = Audio2Exp(netG, cfg_exp, device=device, prepare_training_loss=False)

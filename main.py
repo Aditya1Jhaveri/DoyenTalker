@@ -5,6 +5,7 @@ from time import  strftime
 import os, sys, time
 from argparse import ArgumentParser
 
+from speech import generate_speech
 from src.utils.preprocess import CropAndExtract
 from src.test_audio2coeff import Audio2Coeff  
 from src.facerender.animate import AnimateFromCoeff
@@ -13,11 +14,49 @@ from src.generate_facerender_batch import get_facerender_data
 from src.utils.init_path import init_path
 
 def main(args):
-    #torch.backends.cudnn.enabled = False
+
+        # Function to read the content of the message file
+    def read_message_from_file(file_path):
+        with open(file_path, 'r') as file:
+            return file.read()
+
+    # Function to read the content of the message file
+    def read_prompt_from_file(file_path):
+        with open(file_path, 'r') as file:
+            return file.read()
+    
+    # Initialize variables
+    message = None
+    prompt = None
+
+    # Conditionally read the message file
+    if args.message_file:
+        message = read_message_from_file(args.message_file)
+
+    # Conditionally read the prompt file
+    if args.image_prompt:
+        prompt = read_prompt_from_file(args.image_prompt)
+
+    input_voice = args.voice
+    input_lang = args.lang
+    
+    path_id = args.result_dir
+    path = os.path.join("results", str(int(time.time())))
+    print("path_id:", path_id, "path:", path)
+    os.makedirs(path, exist_ok=True)
+ 
+    tts_output="output.wav"
+    
+    print("-----------------------------------------")
+    print("generating speech")
+    generate_speech(path_id, tts_output, message,input_voice, input_lang)
+    print("\ngenerating speech:", tts_output,)
+
 
     pic_path = args.source_image
-    audio_path = args.driven_audio
-    save_dir = os.path.join(args.result_dir, strftime("%Y_%m_%d_%H.%M.%S"))
+    audio_path = tts_output
+    # audio_path = args.driven_audio
+    save_dir = path
     os.makedirs(save_dir, exist_ok=True)
     pose_style = args.pose_style
     device = args.device
@@ -29,15 +68,16 @@ def main(args):
     ref_pose = args.ref_pose
 
     current_root_path = os.path.split(sys.argv[0])[0]
+    
 
-    sadtalker_paths = init_path(args.checkpoint_dir, os.path.join(current_root_path, 'src/config'), args.size, args.old_version, args.preprocess)
+    doyentalker_paths = init_path(args.checkpoint_dir, os.path.join(current_root_path, 'src/config'), args.size, args.old_version, args.preprocess)
 
     #init model
-    preprocess_model = CropAndExtract(sadtalker_paths, device)
+    preprocess_model = CropAndExtract(doyentalker_paths, device)
 
-    audio_to_coeff = Audio2Coeff(sadtalker_paths,  device)
+    audio_to_coeff = Audio2Coeff(doyentalker_paths,  device)
     
-    animate_from_coeff = AnimateFromCoeff(sadtalker_paths, device)
+    animate_from_coeff = AnimateFromCoeff(doyentalker_paths, device)
 
     #crop image and extract 3dmm from image
     first_frame_dir = os.path.join(save_dir, 'first_frame_dir')
@@ -96,8 +136,13 @@ def main(args):
     
 if __name__ == '__main__':
 
-    parser = ArgumentParser()  
-    parser.add_argument("--driven_audio", default='./examples/driven_audio/bus_chinese.wav', help="path to driven audio")
+    parser = ArgumentParser()
+    
+    parser.add_argument("--message_file", type=str,  help="path to the file containing the speech message")
+    parser.add_argument("--voice", type=str, help="path to speaker voice file")
+    parser.add_argument("--lang",  type=str, help="select the language for speaker voice")
+    parser.add_argument("--path_id", default=str(int(time.time())), help="set the path id to use")
+    # parser.add_argument("--driven_audio", default='./examples/driven_audio/bus_chinese.wav', help="path to driven audio")
     parser.add_argument("--source_image", default='./examples/source_image/full_body_1.png', help="path to source image")
     parser.add_argument("--ref_eyeblink", default=None, help="path to reference video providing eye blinking")
     parser.add_argument("--ref_pose", default=None, help="path to reference video providing pose")

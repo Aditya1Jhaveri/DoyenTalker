@@ -32,9 +32,9 @@ except:
 
 class AnimateFromCoeff():
 
-    def __init__(self, sadtalker_path, device):
+    def __init__(self, doyentalker_path, device):
 
-        with open(sadtalker_path['facerender_yaml']) as f:
+        with open(doyentalker_path['facerender_yaml']) as f:
             config = yaml.safe_load(f)
 
         generator = OcclusionAwareSPADEGenerator(**config['model_params']['generator_params'],
@@ -58,16 +58,16 @@ class AnimateFromCoeff():
         for param in mapping.parameters():
             param.requires_grad = False
 
-        if sadtalker_path is not None:
-            if 'checkpoint' in sadtalker_path: # use safe tensor
-                self.load_cpk_facevid2vid_safetensor(sadtalker_path['checkpoint'], kp_detector=kp_extractor, generator=generator, he_estimator=None)
+        if doyentalker_path is not None:
+            if 'checkpoint' in doyentalker_path: # use safe tensor
+                self.load_cpk_facevid2vid_safetensor(doyentalker_path['checkpoint'], kp_detector=kp_extractor, generator=generator, he_estimator=None)
             else:
-                self.load_cpk_facevid2vid(sadtalker_path['free_view_checkpoint'], kp_detector=kp_extractor, generator=generator, he_estimator=he_estimator)
+                self.load_cpk_facevid2vid(doyentalker_path['free_view_checkpoint'], kp_detector=kp_extractor, generator=generator, he_estimator=he_estimator)
         else:
             raise AttributeError("Checkpoint should be specified for video head pose estimator.")
 
-        if  sadtalker_path['mappingnet_checkpoint'] is not None:
-            self.load_cpk_mapping(sadtalker_path['mappingnet_checkpoint'], mapping=mapping)
+        if  doyentalker_path['mappingnet_checkpoint'] is not None:
+            self.load_cpk_mapping(doyentalker_path['mappingnet_checkpoint'], mapping=mapping)
         else:
             raise AttributeError("Checkpoint should be specified for video head pose estimator.") 
 

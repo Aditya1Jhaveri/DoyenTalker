@@ -44,20 +44,20 @@ def split_coeff(coeffs):
 
 
 class CropAndExtract():
-    def __init__(self, sadtalker_path, device):
+    def __init__(self, doyentalker_path, device):
 
         self.propress = Preprocesser(device)
         self.net_recon = networks.define_net_recon(net_recon='resnet50', use_last_fc=False, init_path='').to(device)
         
-        if sadtalker_path['use_safetensor']:
-            checkpoint = safetensors.torch.load_file(sadtalker_path['checkpoint'])    
+        if doyentalker_path['use_safetensor']:
+            checkpoint = safetensors.torch.load_file(doyentalker_path['checkpoint'])    
             self.net_recon.load_state_dict(load_x_from_safetensor(checkpoint, 'face_3drecon'))
         else:
-            checkpoint = torch.load(sadtalker_path['path_of_net_recon_model'], map_location=torch.device(device))    
+            checkpoint = torch.load(doyentalker_path['path_of_net_recon_model'], map_location=torch.device(device))    
             self.net_recon.load_state_dict(checkpoint['net_recon'])
 
         self.net_recon.eval()
-        self.lm3d_std = load_lm3d(sadtalker_path['dir_of_BFM_fitting'])
+        self.lm3d_std = load_lm3d(doyentalker_path['dir_of_BFM_fitting'])
         self.device = device
     
     def generate(self, input_path, save_dir, crop_or_resize='crop', source_image_flag=False, pic_size=256):

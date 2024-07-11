@@ -43,12 +43,12 @@ class SadTalker():
         length_of_audio = 0, use_blink=True,
         result_dir='./results/'):
 
-        self.sadtalker_paths = init_path(self.checkpoint_path, self.config_path, size, False, preprocess)
-        print(self.sadtalker_paths)
+        self.doyentalker_paths = init_path(self.checkpoint_path, self.config_path, size, False, preprocess)
+        print(self.doyentalker_paths)
             
-        self.audio_to_coeff = Audio2Coeff(self.sadtalker_paths, self.device)
-        self.preprocess_model = CropAndExtract(self.sadtalker_paths, self.device)
-        self.animate_from_coeff = AnimateFromCoeff(self.sadtalker_paths, self.device)
+        self.audio_to_coeff = Audio2Coeff(self.doyentalker_paths, self.device)
+        self.preprocess_model = CropAndExtract(self.doyentalker_paths, self.device)
+        self.animate_from_coeff = AnimateFromCoeff(self.doyentalker_paths, self.device)
 
         time_tag = str(uuid.uuid4())
         save_dir = os.path.join(result_dir, time_tag)
