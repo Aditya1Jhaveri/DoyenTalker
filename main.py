@@ -50,7 +50,7 @@ def main(args):
     print("-----------------------------------------")
     print("generating speech")
     generate_speech(path_id, tts_output, message,input_voice, input_lang)
-    print("\ngenerating speech:", tts_output,)
+    print("\ngenerating speech:", tts_output)
 
 
     pic_path = args.source_image
@@ -141,7 +141,6 @@ if __name__ == '__main__':
     parser.add_argument("--message_file", type=str,  help="path to the file containing the speech message")
     parser.add_argument("--voice", type=str, help="path to speaker voice file")
     parser.add_argument("--lang",  type=str, help="select the language for speaker voice")
-    parser.add_argument("--path_id", default=str(int(time.time())), help="set the path id to use")
     # parser.add_argument("--driven_audio", default='./examples/driven_audio/bus_chinese.wav', help="path to driven audio")
     parser.add_argument("--source_image", default='./examples/source_image/full_body_1.png', help="path to source image")
     parser.add_argument("--ref_eyeblink", default=None, help="path to reference video providing eye blinking")
