@@ -5,7 +5,7 @@ from time import  strftime
 import os, sys, time
 from argparse import ArgumentParser
 
-from speech import generate_speech
+from src.speech import generate_speech
 from src.utils.preprocess import CropAndExtract
 from src.test_audio2coeff import Audio2Coeff  
 from src.facerender.animate import AnimateFromCoeff
@@ -20,28 +20,29 @@ def main(args):
         with open(file_path, 'r') as file:
             return file.read()
 
-    # Function to read the content of the message file
-    def read_prompt_from_file(file_path):
-        with open(file_path, 'r') as file:
-            return file.read()
+    # # Function to read the content of the message file
+    # def read_prompt_from_file(file_path):
+    #     with open(file_path, 'r') as file:
+    #         return file.read()
     
     # Initialize variables
     message = None
-    prompt = None
+    # prompt = None
 
     # Conditionally read the message file
     if args.message_file:
         message = read_message_from_file(args.message_file)
 
-    # Conditionally read the prompt file
-    if args.image_prompt:
-        prompt = read_prompt_from_file(args.image_prompt)
+    # # Conditionally read the prompt file
+    # if args.image_prompt:
+    #     prompt = read_prompt_from_file(args.image_prompt)
 
     input_voice = args.voice
     input_lang = args.lang
     
-    path_id = args.result_dir
+
     path = os.path.join("results", str(int(time.time())))
+    path_id = path
     print("path_id:", path_id, "path:", path)
     os.makedirs(path, exist_ok=True)
  
