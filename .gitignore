@@ -6,6 +6,23 @@ __pycache__/
 # C extensions
 *.so
 
+*.pth
+*.avi
+*.png
+__pycache__
+__pycache__/*
+.DS_Store
+temp/*
+results/*
+*.lock
+!assets/*.mp4
+!tortoise/data/mel_norms.pth
+share
+Lib
+Library
+checkpoints
+Scripts
+pyvenv.cfg
 # Distribution / packaging
 .Python
 build/
@@ -25,7 +42,10 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
-
+Lib
+Library
+pyvenv.cfg
+Scripts
 # PyInstaller
 #  Usually these files are written by a python script from a template
 #  before PyInstaller builds the exe, so as to inject date/other infos into it.
