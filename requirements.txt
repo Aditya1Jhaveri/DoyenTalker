@@ -22,3 +22,4 @@ safetensors
 kornia
 scipy
 gdown
+streamlit
