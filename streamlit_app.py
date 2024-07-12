@@ -1,12 +1,31 @@
 import streamlit as st
-import subprocess
-import time 
+import requests
+from pyngrok import ngrok
 import os
-import tempfile
 
+# Flask endpoint URL
+FLASK_URL = "http://localhost:5000/doyentalker"  # Adjust port if necessary
+
+# Function to run DoyenTalker via Flask API
+def run_doyentalker(message, voice, lang, source_image, expression_scale, enhancer, background_enhancer, still, preprocess):
+    data = {
+        "message": message,
+        "voice": voice,
+        "lang": lang,
+        "source_image": source_image,
+        "expression_scale": expression_scale,
+        "enhancer": enhancer,
+        "background_enhancer": background_enhancer,
+        "still": still,
+        "preprocess": preprocess,
+    }
+    response = requests.post(FLASK_URL, json=data)
+    return response.json()
+
+# Streamlit UI
 def main():
     st.title("DoyenTalker")
-    
+
     # Input fields
     message = st.text_area("Enter the message text")
     voice = st.file_uploader("Upload Voice File", type=["wav", "mp3"])
@@ -18,69 +37,17 @@ def main():
     still = st.checkbox("Crop Back to Original Videos for Full Body Animation")
     preprocess = st.selectbox("Preprocess", ['crop', 'extcrop', 'resize', 'full', 'extfull'])
 
+    # Run button
     if st.button("Run"):
-        with tempfile.TemporaryDirectory() as tempdir:
-            # Save the text message to a temporary file
-            message_file_path = os.path.join(tempdir, "message.txt")
-            with open(message_file_path, "w") as f:
-                f.write(message)
+        result = run_doyentalker(message, voice, lang, source_image, expression_scale, enhancer, background_enhancer, still, preprocess)
+        st.json(result)  # Display result from Flask API
 
-            # Save the voice file to a temporary directory
-            if voice:
-                voice_file_path = os.path.join(tempdir, voice.name)
-                with open(voice_file_path, "wb") as f:
-                    f.write(voice.read())
-            else:
-                st.error("Please upload a voice file")
-                return
-
-            # Save the source image to a temporary directory
-            if source_image:
-                source_image_path = os.path.join(tempdir, source_image.name)
-                with open(source_image_path, "wb") as f:
-                    f.write(source_image.read())
-            else:
-                st.error("Please upload a source image")
-                return
-            
-            # Define the result directory
-            result_dir = "./results"
-            path = os.path.join(result_dir, str(int(time.time())))
-            os.makedirs(path, exist_ok=True)
-
-            # Prepare command
-            command = [
-                "python", "main.py",
-                "--message_file", message_file_path,
-                "--voice", voice_file_path,
-                "--lang", lang,
-                "--source_image", source_image_path,
-                "--expression_scale", str(expression_scale),
-                "--preprocess", preprocess,
-                "--result_dir", path
-            ]
-
-            if enhancer:
-                command.extend(["--enhancer", "gfpgan"])  # Replace with actual enhancer if needed
-
-            if background_enhancer:
-                command.extend(["--background_enhancer", "realesrgan"])  # Replace with actual background enhancer if needed
-
-            if still:
-                command.append("--still")
-
-            # Run command
-            st.write("Running command:", " ".join(command))
-            result = subprocess.run(command, capture_output=True, text=True)
-            st.text(result.stdout)
-            st.text(result.stderr)
-            
-            # Display the generated video
-            video_path = os.path.join(path, 'result.mp4')  # Adjust the path based on your output
-            if os.path.exists(video_path):
-                st.video(video_path)
-            else:
-                st.write("No video found at", video_path)
+        # Display the generated video if available
+        video_path = result.get('video_path', None)
+        if video_path and os.path.exists(video_path):
+            st.video(video_path)
+        else:
+            st.write("No video found.")
 
 if __name__ == "__main__":
     main()
