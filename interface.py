@@ -16,12 +16,19 @@ from src.generate_batch import get_data
 from src.generate_facerender_batch import get_facerender_data
 from src.utils.init_path import init_path
 
-def generate_video_interface(input_text, lang, voice, image, gfpgan, restoreformer):
-    voice_folder = "assets/voice"
-    avatar_folder = "assets/avatar"
+voice_folder = "assets/voice"
+avatar_folder = "assets/avatar"
+# Get list of images with multiple extensions
+image_extensions = ('.jpeg', '.jpg', '.png')
     
+def generate_video_interface(input_text, lang, voice, image, gfpgan, restoreformer):
+    # voice_folder = "assets/voice"
+    # avatar_folder = "assets/avatar"
+    
+    # Find the image file with the correct extension
+    image_file = next((os.path.join(avatar_folder, f) for f in os.listdir(avatar_folder) if f.startswith(image) and f.endswith(image_extensions)), '')
+
     voice_file = os.path.join(voice_folder, f"{voice}.mp3")
-    image_file = os.path.join(avatar_folder, f"{image}.jpeg")
     
     enhancer = None
     if gfpgan:
@@ -174,8 +181,7 @@ def interface(args):
     return generated_video_path
 
 def update_image_and_voice(voice, image):
-    voice_folder = "assets/voice"
-    avatar_folder = "assets/avatar"
+   
     
     voice_file = os.path.join(voice_folder, f"{voice}.mp3")
     image_file = os.path.join(avatar_folder, f"{image}.jpeg")
@@ -188,8 +194,8 @@ def update_image_and_voice(voice, image):
     return gr.update(value=image_file), gr.update(value=voice_file)
 
 # Define available voices and images
-available_voices = ["ab_voice", "modi_voice", "srk_voice", "trump_voice"]
-available_images = ["male1", "male2", "male3", "male4"]
+available_voices = [f.split('.')[0] for f in os.listdir(voice_folder) if f.endswith('.mp3')]
+available_images = [f.split('.')[0] for f in os.listdir(avatar_folder) if f.endswith(image_extensions)]
 
 
 
