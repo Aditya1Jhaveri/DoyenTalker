@@ -16,12 +16,18 @@ from src.generate_batch import get_data
 from src.generate_facerender_batch import get_facerender_data
 from src.utils.init_path import init_path
 
-def generate_video_interface(input_text, lang, voice, image,gfpgan):
-    voice_folder = "example/voice"
-    avatar_folder = "example/avatar"
+def generate_video_interface(input_text, lang, voice, image, gfpgan, restoreformer):
+    voice_folder = "assets/voice"
+    avatar_folder = "assets/avatar"
     
     voice_file = os.path.join(voice_folder, f"{voice}.mp3")
     image_file = os.path.join(avatar_folder, f"{image}.jpeg")
+    
+    enhancer = None
+    if gfpgan:
+        enhancer = "gfpgan"
+    elif restoreformer:
+        enhancer = "RestoreFormer"
     
     args = Namespace(
         message_file=input_text,
@@ -30,8 +36,8 @@ def generate_video_interface(input_text, lang, voice, image,gfpgan):
         source_image=image_file,
         expression_scale=1.5,
         preprocess="full",
-        still=False,
-        enhancer=gfpgan,
+        still=True,
+        enhancer=enhancer,
         background_enhancer=None,
         checkpoint_dir='./checkpoints',
         pose_style=0,
@@ -168,8 +174,8 @@ def interface(args):
     return generated_video_path
 
 def update_image_and_voice(voice, image):
-    voice_folder = "example/voice"
-    avatar_folder = "example/avatar"
+    voice_folder = "assets/voice"
+    avatar_folder = "assets/avatar"
     
     voice_file = os.path.join(voice_folder, f"{voice}.mp3")
     image_file = os.path.join(avatar_folder, f"{image}.jpeg")
@@ -195,12 +201,12 @@ iface = gr.Interface(
         gr.Radio(label="Language", choices=["en", "fr-fr", "pt-br", "zh-CN", "de", "es", "hi"], value="en"),
         gr.Dropdown(label="Select Voice", choices=available_voices, value="ab_voice", interactive=True),
         gr.Dropdown(label="Select Image", choices=available_images, value="male1", interactive=True),
-        gr.checkbox(label="Enhancer for face", value="gfpgan"),
+        gr.Checkbox(label="Enhancer for face", value=True),
     ],
     outputs=[gr.Video(format="mp4")],
     title="DoyenTalker",
     description="Generate a video with DoyenTalker based on provided inputs.",
-
+    allow_flagging="never"
 )
 
 iface.launch(debug=True)
