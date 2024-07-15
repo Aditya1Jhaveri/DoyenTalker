@@ -16,6 +16,44 @@ from src.generate_batch import get_data
 from src.generate_facerender_batch import get_facerender_data
 from src.utils.init_path import init_path
 
+def generate_video_interface(input_text, lang, voice, image,gfpgan):
+    voice_folder = "example/voice"
+    avatar_folder = "example/avatar"
+    
+    voice_file = os.path.join(voice_folder, f"{voice}.mp3")
+    image_file = os.path.join(avatar_folder, f"{image}.jpeg")
+    
+    args = Namespace(
+        message_file=input_text,
+        lang=lang,
+        voice=voice_file,
+        source_image=image_file,
+        expression_scale=1.5,
+        preprocess="full",
+        still=False,
+        enhancer=gfpgan,
+        background_enhancer=None,
+        checkpoint_dir='./checkpoints',
+        pose_style=0,
+        batch_size=2,
+        size=256,
+        input_yaw=None,
+        input_pitch=None,
+        input_roll=None,
+        ref_eyeblink=None,
+        ref_pose=None,
+        cpu=False, 
+        face3dvis=False,
+        old_version=False
+    )
+
+    if torch.cuda.is_available() and not args.cpu:
+        args.device = "cuda"
+    else:
+        args.device = "cpu"
+
+    return interface(args)  # Call the interface function to generate the video and return its path
+
 def interface(args):
     tstart = time.time()
 
@@ -119,9 +157,6 @@ def interface(args):
     shutil.move(result, generated_video_path)
     print('The generated video is named:', generated_video_path)
 
-    if not args.verbose:
-        shutil.rmtree(save_dir)
-
     print("done")
     print("Overall timing")
     print("--------------")
@@ -130,115 +165,42 @@ def interface(args):
     print("animating face:", humanize.naturaldelta(dt.timedelta(seconds=tanimate)))
     print("total time:", humanize.naturaldelta(dt.timedelta(seconds=int(time.time() - tstart))))
 
-    return generated_video_path  # Return the path of the generated video
+    return generated_video_path
 
 def update_image_and_voice(voice, image):
-    voice_folder="example/voice"
-    avatar_folder="example/avatar"
+    voice_folder = "example/voice"
+    avatar_folder = "example/avatar"
     
     voice_file = os.path.join(voice_folder, f"{voice}.mp3")
     image_file = os.path.join(avatar_folder, f"{image}.jpeg")
+    
+    if not os.path.exists(voice_file):
+        raise ValueError(f"Voice file {voice_file} does not exist.")
+    if not os.path.exists(image_file):
+        raise ValueError(f"Image file {image_file} does not exist.")
+    
     return gr.update(value=image_file), gr.update(value=voice_file)
-
-def generate_video_interface(input_text, lang, voice, enhancer, still, background_enhancer):
-    
-    voice_folder="example/voice"
-    avatar_folder="example/avatar"
-    
-    voice_file = os.path.join(voice_folder, f"{voice}.mp3")
-    image_file = os.path.join(avatar_folder, f"{image}.jpeg")
-    
-    args = Namespace(
-        message_file=input_text,
-        lang=lang,
-        voice=voice_file,
-        source_image=image_file,
-        expression_scale=1.5,
-        preprocess="full",
-        still=still,
-        enhancer=enhancer,
-        background_enhancer=background_enhancer,
-        checkpoint_dir='./checkpoints',
-        pose_style=0,
-        batch_size=2,
-        size=256,
-        input_yaw=None,
-        input_pitch=None,
-        input_roll=None,
-        ref_eyeblink=None,
-        ref_pose=None,
-        cpu=False, 
-        face3dvis=False,
-        verbose=False,
-        old_version=False
-    )
-
-    if torch.cuda.is_available() and not args.cpu:
-        args.device = "cuda"
-    else:
-        args.device = "cpu"
-
-    return interface(args)  # Return the output of interface function, which is the generated video path
 
 # Define available voices and images
 available_voices = ["ab_voice", "modi_voice", "srk_voice", "trump_voice"]
 available_images = ["male1", "male2", "male3", "male4"]
 
-# Define Gradio interface inputs
-inputs = [
-    gr.Textbox(placeholder="Enter text to convert to speech", label="Input the text", max_lines=3),
-    gr.Radio(label="Language", choices=["en", "fr-fr", "pt-br", "zh-CN", "de", "es", "hi"], value="en"),
-    gr.Dropdown(label="Select Voice", choices=available_voices, value="man1", interactive=True),
-    gr.Dropdown(label="Select Image", choices=available_images, value="srk_voice", interactive=True),
-]
 
-# Define dynamic updates for image and voice display
-image_output = gr.Image(label="Selected Image")
-voice_output = gr.Audio(label="Selected Voice", type="filepath")
-
-def update_outputs(voice, image):
-    return update_image_and_voice(voice, image)
 
 # Create Gradio interface
 iface = gr.Interface(
     fn=generate_video_interface,
-    inputs=inputs,
-    outputs=[gr.Video(label="Generated Video")],
+    inputs=[
+        gr.Textbox(placeholder="Enter text to convert to speech", label="Input the text", max_lines=3),
+        gr.Radio(label="Language", choices=["en", "fr-fr", "pt-br", "zh-CN", "de", "es", "hi"], value="en"),
+        gr.Dropdown(label="Select Voice", choices=available_voices, value="ab_voice", interactive=True),
+        gr.Dropdown(label="Select Image", choices=available_images, value="male1", interactive=True),
+        gr.checkbox(label="Enhancer for face", value="gfpgan"),
+    ],
+    outputs=[gr.Video(format="mp4")],
     title="DoyenTalker",
     description="Generate a video with DoyenTalker based on provided inputs.",
-    live=True
+
 )
-
-# Create Gradio interface for updating image and voice
-iface = gr.Blocks()
-
-with iface:
-    with gr.Row():
-        input_text = gr.Textbox(placeholder="Enter text to convert to speech", label="Input the text", max_lines=3)
-        lang = gr.Radio(label="Language", choices=["en", "fr-fr", "pt-br", "zh-CN", "de", "es", "hi"], value="en")
-    with gr.Row():
-        voice = gr.Dropdown(label="Select Voice", choices=available_voices, value="male1", interactive=True)
-        image = gr.Dropdown(label="Select Image", choices=available_images, value="male1", interactive=True)
-    with gr.Row():
-        image_display = gr.Image(label="Selected Image")
-        voice_display = gr.Audio(label="Selected Voice", type="filepath")
-    with gr.Row():
-        expression_scale = gr.Slider(label="Expression Scale", minimum=0.5, maximum=2.0, value=1.5)
-        enhancer = gr.Checkbox(label="Enhance", value=False)
-    with gr.Row():
-        still = gr.Checkbox(label="Still Mode", value=False)
-        preprocess = gr.Radio(label="Preprocess Mode", choices=["none", "full"], value="full")
-    with gr.Row():
-        background_enhancer = gr.Checkbox(label="Background Enhancer", value=False)
-    with gr.Row():
-        generate_button = gr.Button("Generate Video")
-        generated_video = gr.Video(label="Generated Video")
-
-    voice.change(update_image_and_voice, [voice, image], [image_display, voice_display])
-    image.change(update_image_and_voice, [voice, image], [image_display, voice_display])
-
-    generate_button.click(generate_video_interface, 
-                          [input_text, lang, voice, image, expression_scale, enhancer, still, preprocess, background_enhancer], 
-                          generated_video)
 
 iface.launch(debug=True)
