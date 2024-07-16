@@ -18,17 +18,18 @@ from src.utils.init_path import init_path
 
 voice_folder = "assets/voice"
 avatar_folder = "assets/avatar"
+
 # Get list of images with multiple extensions
 image_extensions = ('.jpeg', '.jpg', '.png')
+voice_extensions = ('.mp3', '.wav')
     
 def generate_video_interface(input_text, lang, voice, image, gfpgan, restoreformer):
-    # voice_folder = "assets/voice"
-    # avatar_folder = "assets/avatar"
     
     # Find the image file with the correct extension
     image_file = next((os.path.join(avatar_folder, f) for f in os.listdir(avatar_folder) if f.startswith(image) and f.endswith(image_extensions)), '')
+        
+    voice_file = next((os.path.join(voice_folder, f) for f in os.listdir(voice_folder) if f.startswith(voice) and f.endswith(voice_extensions)), '')
 
-    voice_file = os.path.join(voice_folder, f"{voice}.mp3")
     
     enhancer = None
     if gfpgan:
@@ -182,9 +183,9 @@ def interface(args):
 
 def update_image_and_voice(voice, image):
    
-    
-    voice_file = os.path.join(voice_folder, f"{voice}.mp3")
-    image_file = os.path.join(avatar_folder, f"{image}.jpeg")
+    image_file = next((os.path.join(avatar_folder, f) for f in os.listdir(avatar_folder) if f.startswith(image) and f.endswith(image_extensions)), '')
+        
+    voice_file = next((os.path.join(voice_folder, f) for f in os.listdir(voice_folder) if f.startswith(voice) and f.endswith(voice_extensions)), '')
     
     if not os.path.exists(voice_file):
         raise ValueError(f"Voice file {voice_file} does not exist.")
@@ -194,7 +195,7 @@ def update_image_and_voice(voice, image):
     return gr.update(value=image_file), gr.update(value=voice_file)
 
 # Define available voices and images
-available_voices = [f.split('.')[0] for f in os.listdir(voice_folder) if f.endswith('.mp3')]
+available_voices = [f.split('.')[0] for f in os.listdir(voice_folder) if f.endswith(voice_extensions)]
 available_images = [f.split('.')[0] for f in os.listdir(avatar_folder) if f.endswith(image_extensions)]
 
 
