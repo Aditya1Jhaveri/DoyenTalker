@@ -209,10 +209,10 @@ available_images = [f.split('.')[0] for f in os.listdir(avatar_folder) if f.ends
 iface = gr.Interface(
     fn=generate_video_interface,
     inputs=[
-        gr.Textbox(placeholder="Enter text to convert to speech", label="Input the text", max_lines=3),
-        gr.Radio(label="Language", choices=["en", "fr-fr", "pt-br", "zh-CN", "de", "es", "hi"], value="en"),
+        gr.Textbox(placeholder="Enter text to convert to speech", label="Input the text", info="Words Limit = 180 words", max_lines=3),
+        gr.Radio(label="Language", choices=['en', 'es', 'fr', 'de', 'it', 'pt', 'pl', 'tr', 'ru', 'nl', 'cs', 'ar', 'zh-cn', 'hu', 'ko', 'ja', 'hi'],info="en - English , es - Spanish , fr - French , de - German , it - Italian , pt - Portuguese , pl - Polish , tr - Turkish , ru - Russian , nl - Dutch , cs - Czech , ar - Araic , zh-cn - Chinese (Simplified) , hu - Hungarian , ko - Korean , ja - Japanese , hi - Hindi ", value="en"),
         gr.Dropdown(label="Select Voice", choices=available_voices, value="ab_voice", interactive=True),
-        gr.Dropdown(label="Select Image", choices=available_images, value="male1", interactive=True),
+        gr.Dropdown(label="Select Avatar", choices=available_images, value="male1", interactive=True),
         # gr.Checkbox(label="Enhancer for face", value=True),
     ],
     outputs=[gr.Video(format="mp4")],
