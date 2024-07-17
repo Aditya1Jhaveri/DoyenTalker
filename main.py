@@ -44,7 +44,9 @@ def main(args):
     print("-----------------------------------------")
     print("generating speech")
     tspeech_start = time.time()
+    
     generate_speech(path_id, tts_output, message, input_voice, input_lang)
+    
     tspeech_end = time.time()
     tspeech = tspeech_end - tspeech_start
     print("\ngenerating speech:", tts_output)
@@ -78,9 +80,13 @@ def main(args):
     os.makedirs(first_frame_dir, exist_ok=True)
     print('3DMM Extraction for source image')
     timage_start = time.time()
+    
     first_coeff_path, crop_pic_path, crop_info = preprocess_model.generate(pic_path, first_frame_dir, args.preprocess, source_image_flag=True, pic_size=args.size)
+    
     timage_end = time.time()
     timage = timage_end - timage_start
+    
+    ## only in use if the reference video in given 
     if first_coeff_path is None:
         print("Can't get the coeffs of the input")
         return

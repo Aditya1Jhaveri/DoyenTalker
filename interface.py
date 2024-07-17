@@ -25,7 +25,6 @@ voice_extensions = ('.mp3', '.wav')
     
 def generate_video_interface(input_text, lang, voice, image, gfpgan, restoreformer):
     
-    # Find the image file with the correct extension
     image_file = next((os.path.join(avatar_folder, f) for f in os.listdir(avatar_folder) if f.startswith(image) and f.endswith(image_extensions)), '')
         
     voice_file = next((os.path.join(voice_folder, f) for f in os.listdir(voice_folder) if f.startswith(voice) and f.endswith(voice_extensions)), '')
@@ -85,7 +84,9 @@ def interface(args):
     print("-----------------------------------------")
     print("generating speech")
     tspeech_start = time.time()
+    
     generate_speech(path_id, tts_output, text_message, input_voice, input_lang)
+    
     tspeech_end = time.time()
     tspeech = tspeech_end - tspeech_start
     print("\ngenerating speech:", tts_output)
@@ -119,9 +120,12 @@ def interface(args):
     os.makedirs(first_frame_dir, exist_ok=True)
     print('3DMM Extraction for source image')
     timage_start = time.time()
+    
     first_coeff_path, crop_pic_path, crop_info = preprocess_model.generate(pic_path, first_frame_dir, args.preprocess, source_image_flag=True, pic_size=args.size)
+    
     timage_end = time.time()
     timage = timage_end - timage_start
+    
     if first_coeff_path is None:
         print("Can't get the coeffs of the input")
         return None
@@ -158,6 +162,7 @@ def interface(args):
 
     # coeff2video
     tanimate_start = time.time()
+    
     data = get_facerender_data(coeff_path, crop_pic_path, first_coeff_path, audio_path,
                                batch_size, input_yaw_list, input_pitch_list, input_roll_list,
                                expression_scale=args.expression_scale, still_mode=args.still, preprocess=args.preprocess, size=args.size)
@@ -208,7 +213,7 @@ iface = gr.Interface(
         gr.Radio(label="Language", choices=["en", "fr-fr", "pt-br", "zh-CN", "de", "es", "hi"], value="en"),
         gr.Dropdown(label="Select Voice", choices=available_voices, value="ab_voice", interactive=True),
         gr.Dropdown(label="Select Image", choices=available_images, value="male1", interactive=True),
-        gr.Checkbox(label="Enhancer for face", value=True),
+        # gr.Checkbox(label="Enhancer for face", value=True),
     ],
     outputs=[gr.Video(format="mp4")],
     title="DoyenTalker",

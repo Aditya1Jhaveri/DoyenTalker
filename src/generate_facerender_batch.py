@@ -91,13 +91,13 @@ def transform_semantic_1(semantic, semantic_radius):
     return coeff_3dmm.transpose(1,0)
 
 def transform_semantic_target(coeff_3dmm, frame_index, semantic_radius):
-    num_frames = coeff_3dmm.shape[0]
+    num_frames = coeff_3dmm.shape[0] 
     seq = list(range(frame_index- semantic_radius, frame_index + semantic_radius+1))
     index = [ min(max(item, 0), num_frames-1) for item in seq ] 
     coeff_3dmm_g = coeff_3dmm[index, :]
     return coeff_3dmm_g.transpose(1,0)
 
-def gen_camera_pose(camera_degree_list, frame_num, batch_size):
+def gen_camera_pose(camera_degree_list, frame_num, batch_size): 
 
     new_degree_list = [] 
     if len(camera_degree_list) == 1:
