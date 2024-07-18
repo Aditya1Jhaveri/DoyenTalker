@@ -15,23 +15,34 @@ def doyentalker():
     message = data.get('message')
     lang = data.get('lang')
     expression_scale = data.get('expression_scale')
-    enhancer = data.get('enhancer')
-    background_enhancer = data.get('background_enhancer')
     still = data.get('still')
     preprocess = data.get('preprocess')
+    
+    
+    voice = "assets/voice/ab_voice.mp3"
+    source_image = "assets/avatar/male9.jpeg"
 
-   
-    voice = "./example/test_audio.mp3"
-    source_image = "./example/test_img.jpeg"
+    
+    # voice_folder = "assets/voice"
+    # avatar_folder = "assets/avatar"
+
+    # # Get list of images with multiple extensions
+    # image_extensions = ('.jpeg', '.jpg', '.png')
+    # voice_extensions = ('.mp3', '.wav')
+    
+    # source_image = next((os.path.join(avatar_folder, f) for f in os.listdir(avatar_folder) if f.startswith(source_image) and f.endswith(image_extensions)), '')
+        
+    # voice = next((os.path.join(voice_folder, f) for f in os.listdir(voice_folder) if f.startswith(voice) and f.endswith(voice_extensions)), '')
 
 
     # Execute your DoyenTalker logic here
-    result = execute_doyentalker(message, voice, lang, source_image, expression_scale, enhancer, background_enhancer, still, preprocess)
+    result = execute_doyentalker(message, voice, lang, source_image, expression_scale, still, preprocess)
+
 
     return jsonify(result)
 
 
-def execute_doyentalker(message, voice, lang, source_image, expression_scale, enhancer, background_enhancer, still, preprocess):
+def execute_doyentalker(message, voice, lang, source_image, expression_scale, still, preprocess):
     # Build command with provided arguments
     command = [
         "python", "main.py",
@@ -40,8 +51,6 @@ def execute_doyentalker(message, voice, lang, source_image, expression_scale, en
         "--voice", voice,
         "--source_image", source_image,
         "--expression_scale", str(expression_scale),
-        "--enhancer", str(enhancer),
-        "--background_enhancer", str(background_enhancer),
         "--still", str(still),
         "--preprocess", preprocess,
     ]
@@ -56,4 +65,4 @@ def execute_doyentalker(message, voice, lang, source_image, expression_scale, en
         return {"status": "error", "message": f"Error running DoyenTalker: {e}"}
 
 if __name__ == '__main__':
-    app.run(port=port)
+    app.run(port=port,debug=True)

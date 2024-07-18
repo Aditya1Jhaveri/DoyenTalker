@@ -21,8 +21,10 @@ share
 Lib
 Library
 checkpoints
-
+scripts
 pyvenv.cfg
+CACHEDIR.TAG
+.lock
 # Distribution / packaging
 .Python
 build/
