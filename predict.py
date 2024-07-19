@@ -3,9 +3,9 @@ import os
 import shutil
 from argparse import Namespace
 from src.utils.preprocess import CropAndExtract
-from audio2coeff import Audio2Coeff
+from src.audio2coeff import Audio2Coeff
 from src.facerender.animate import AnimateFromCoeff
-from generate_audio_batch import get_data
+from src.generate_audio_batch import get_data
 from src.generate_facerender_batch import get_facerender_data
 from src.utils.init_path import init_path
 from cog import BasePredictor, Input, Path
