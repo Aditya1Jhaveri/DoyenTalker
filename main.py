@@ -10,9 +10,9 @@ import humanize
 
 from src.speech import generate_speech
 from src.utils.preprocess import CropAndExtract
-from src.test_audio2coeff import Audio2Coeff  
+from audio2coeff import Audio2Coeff  
 from src.facerender.animate import AnimateFromCoeff
-from src.generate_batch import get_data
+from generate_audio_batch import get_data
 from src.generate_facerender_batch import get_facerender_data
 from src.utils.init_path import init_path
 
@@ -127,7 +127,7 @@ def main(args):
                                batch_size, input_yaw_list, input_pitch_list, input_roll_list,
                                expression_scale=args.expression_scale, still_mode=args.still, preprocess=args.preprocess, size=args.size)
     
-    result = animate_from_coeff.generate(data, save_dir, pic_path, crop_info, 
+    result = animate_from_coeff.generate(data, save_dir, pic_path, crop_info,
                                          enhancer=args.enhancer, background_enhancer=args.background_enhancer, preprocess=args.preprocess, img_size=args.size)
     
     tanimate_end = time.time()
@@ -151,9 +151,9 @@ if __name__ == '__main__':
     parser = ArgumentParser()
     
     parser.add_argument("--message_file", type=str, help="path to the file containing the speech message")
-    parser.add_argument("--voice", type=str, help="path to speaker voice file")
-    parser.add_argument("--lang", type=str, help="select the language for speaker voice")
-    parser.add_argument("--source_image", default='./examples/source_image/full_body_1.png', help="path to source image")
+    parser.add_argument("--voice", type=str, default='./assets/voice/ab_voice.mp3', help="path to speaker voice file")
+    parser.add_argument("--lang", type=str, default='en', help="select the language for speaker voice option are (en - English , es - Spanish , fr - French , de - German , it - Italian , pt - Portuguese , pl - Polish , tr - Turkish , ru - Russian , nl - Dutch , cs - Czech , ar - Araic , zh-cn - Chinese (Simplified) , hu - Hungarian , ko - Korean , ja - Japanese , hi - Hindi)")
+    parser.add_argument("--source_image", default='./assets/avatar/male1.jpeg', help="path to source image")
     parser.add_argument("--ref_eyeblink", default=None, help="path to reference video providing eye blinking")
     parser.add_argument("--ref_pose", default=None, help="path to reference video providing pose")
     parser.add_argument("--checkpoint_dir", default='./checkpoints', help="path to output")

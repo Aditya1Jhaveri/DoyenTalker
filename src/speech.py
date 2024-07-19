@@ -1,10 +1,8 @@
-
 import os
 import torch
 from TTS.api import TTS
 import time
-# import humanize
-import datetime as dt
+from argparse import ArgumentParser
 
 # Get device
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -21,32 +19,41 @@ def generate_speech(path_id, outfile, text, speaker_wav=None, language="en"):
     
     return output_path
 
-# def main():
-#     # Create a unique path based on the current timestamp
-#     path_id = os.path.join("results", str(int(time.time())))
-#     os.makedirs(path_id, exist_ok=True)
+def speech(args):
+    #  Create a unique path based on the current timestamp
+    path_id = os.path.join("temp", str(int(time.time())))
+    os.makedirs(path_id, exist_ok=True)
     
-#     print(f"path_id: {path_id} path: {os.path.abspath(path_id)}")
-    
-#     message = """Reading offers numerous benefits beyond simple entertainment, encompassing cognitive, emotional, and social dimensions. 
-#     It acts as a mental workout, sharpening critical thinking, concentration, and analytical skills while expanding vocabulary and knowledge. 
-#     Additionally, it fosters empathy and emotional intelligence by allowing readers to inhabit different perspectives and experiences. 
-#     Reading is a gateway to diverse cultures, histories, and ideas, promoting open-mindedness and cultural understanding. 
-#     Moreover, it provides relaxation and stress reduction, offering an escape from daily pressures. 
-#     Furthermore, it can enhance communication skills and creativity, sparking imagination and innovation. 
-#     Ultimately, reading is a lifelong pursuit that enriches individuals’ lives intellectually, emotionally, and socially."""
+    # Function to read the content of the message file
+    def read_message_from_file(file_path):
+        with open(file_path, 'r') as file:
+            return file.read()
 
-#     speaker_wav = "/content/drive/MyDrive/Y2meta.app - Trump Makes CPAC Crowd Laugh Doing Mean Impression Of Biden Trying To Get Off Stage (256 kbps).mp3"
-#     outfile = "output.wav"
-#     language = "en"
+    # Initialize variables
+    message = None
     
-#     try:
-#         output_path = generate_speech(path_id, outfile, message, speaker_wav=speaker_wav, language=language)
-#         print(f"Speech saved to {output_path}")
-#     except Exception as e:
-#         print(f"An error occurred: {e}")
+    # Conditionally read the message file
+    if args.message_file:
+        message = read_message_from_file(args.message_file)
+        
+    speaker_wav = args.voice
+    outfile = "output.wav"
+    language = args.lang
+    
+    try:
+        output_path = generate_speech(path_id, outfile,text=message, speaker_wav=speaker_wav, language=language)
+        print(f"Speech saved to {output_path}")
+    except Exception as e:
+        print(f"An error occurred: {e}")
 
-# if __name__ == '__main__':
+if __name__ == '__main__':
+    parser = ArgumentParser()
+    
+    parser.add_argument("--message_file", type=str, help="path to the file containing the speech message")
+    parser.add_argument("--voice", type=str, default='./assets/voice/ab_voice.mp3', help="path to speaker voice file")
+    parser.add_argument("--lang", type=str, default='en', help="select the language for speaker voice option are (en - English , es - Spanish , fr - French , de - German , it - Italian , pt - Portuguese , pl - Polish , tr - Turkish , ru - Russian , nl - Dutch , cs - Czech , ar - Araic , zh-cn - Chinese (Simplified) , hu - Hungarian , ko - Korean , ja - Japanese , hi - Hindi)")
    
-#     main()
+    args = parser.parse_args()
+
+    speech(args)
    

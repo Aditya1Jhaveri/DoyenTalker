@@ -10,9 +10,9 @@ from argparse import Namespace
 # Import your existing functions and modules
 from src.speech import generate_speech
 from src.utils.preprocess import CropAndExtract
-from src.test_audio2coeff import Audio2Coeff
+from audio2coeff import Audio2Coeff
 from src.facerender.animate import AnimateFromCoeff
-from src.generate_batch import get_data
+from generate_audio_batch import get_data
 from src.generate_facerender_batch import get_facerender_data
 from src.utils.init_path import init_path
 
