@@ -59,7 +59,7 @@ def download_model(local_dir='./checkpoints'):
     REPO_ID = 'vinthony/SadTalker'
     snapshot_download(repo_id=REPO_ID, local_dir=local_dir, local_dir_use_symlinks=False)
 
-def get_source_image(image):   
+def get_avatar_image(image):   
         return image
 
 def get_img_from_txt2img(x):

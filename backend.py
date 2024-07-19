@@ -20,7 +20,7 @@ def doyentalker():
     
     
     voice = "assets/voice/ab_voice.mp3"
-    source_image = "assets/avatar/male9.jpeg"
+    avatar_image = "assets/avatar/male9.jpeg"
 
     
     # voice_folder = "assets/voice"
@@ -30,26 +30,26 @@ def doyentalker():
     # image_extensions = ('.jpeg', '.jpg', '.png')
     # voice_extensions = ('.mp3', '.wav')
     
-    # source_image = next((os.path.join(avatar_folder, f) for f in os.listdir(avatar_folder) if f.startswith(source_image) and f.endswith(image_extensions)), '')
+    # avatar_image = next((os.path.join(avatar_folder, f) for f in os.listdir(avatar_folder) if f.startswith(avatar_image) and f.endswith(image_extensions)), '')
         
     # voice = next((os.path.join(voice_folder, f) for f in os.listdir(voice_folder) if f.startswith(voice) and f.endswith(voice_extensions)), '')
 
 
     # Execute your DoyenTalker logic here
-    result = execute_doyentalker(message, voice, lang, source_image, expression_scale, still, preprocess)
+    result = execute_doyentalker(message, voice, lang, avatar_image, expression_scale, still, preprocess)
 
 
     return jsonify(result)
 
 
-def execute_doyentalker(message, voice, lang, source_image, expression_scale, still, preprocess):
+def execute_doyentalker(message, voice, lang, avatar_image, expression_scale, still, preprocess):
     # Build command with provided arguments
     command = [
         "python", "main.py",
         "--message", message,
         "--lang", lang,
         "--voice", voice,
-        "--source_image", source_image,
+        "--avatar_image", avatar_image,
         "--expression_scale", str(expression_scale),
         "--still", str(still),
         "--preprocess", preprocess,

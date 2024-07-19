@@ -99,14 +99,14 @@ def keypoint_transformation(kp_canonical, he, wo_exp=False):
 
 
 
-def make_animation(source_image, source_semantics, target_semantics,
+def make_animation(avatar_image, source_semantics, target_semantics,
                             generator, kp_detector, he_estimator, mapping, 
                             yaw_c_seq=None, pitch_c_seq=None, roll_c_seq=None,
                             use_exp=True, use_half=False):
     with torch.no_grad():
         predictions = []
 
-        kp_canonical = kp_detector(source_image)
+        kp_canonical = kp_detector(avatar_image)
         he_source = mapping(source_semantics)
         kp_source = keypoint_transformation(kp_canonical, he_source)
     
@@ -125,14 +125,14 @@ def make_animation(source_image, source_semantics, target_semantics,
             kp_driving = keypoint_transformation(kp_canonical, he_driving)
                 
             kp_norm = kp_driving
-            out = generator(source_image, kp_source=kp_source, kp_driving=kp_norm)
+            out = generator(avatar_image, kp_source=kp_source, kp_driving=kp_norm)
             '''
-            source_image_new = out['prediction'].squeeze(1)
-            kp_canonical_new =  kp_detector(source_image_new)
-            he_source_new = he_estimator(source_image_new) 
+            avatar_image_new = out['prediction'].squeeze(1)
+            kp_canonical_new =  kp_detector(avatar_image_new)
+            he_source_new = he_estimator(avatar_image_new) 
             kp_source_new = keypoint_transformation(kp_canonical_new, he_source_new, wo_exp=True)
             kp_driving_new = keypoint_transformation(kp_canonical_new, he_driving, wo_exp=True)
-            out = generator(source_image_new, kp_source=kp_source_new, kp_driving=kp_driving_new)
+            out = generator(avatar_image_new, kp_source=kp_source_new, kp_driving=kp_driving_new)
             '''
             predictions.append(out['prediction'])
         predictions_ts = torch.stack(predictions, dim=1)
@@ -155,14 +155,14 @@ class AnimateModel(torch.nn.Module):
 
     def forward(self, x):
         
-        source_image = x['source_image']
+        avatar_image = x['avatar_image']
         source_semantics = x['source_semantics']
         target_semantics = x['target_semantics']
         yaw_c_seq = x['yaw_c_seq']
         pitch_c_seq = x['pitch_c_seq']
         roll_c_seq = x['roll_c_seq']
 
-        predictions_video = make_animation(source_image, source_semantics, target_semantics,
+        predictions_video = make_animation(avatar_image, source_semantics, target_semantics,
                                         self.generator, self.kp_extractor,
                                         self.mapping, use_exp = True,
                                         yaw_c_seq=yaw_c_seq, pitch_c_seq=pitch_c_seq, roll_c_seq=roll_c_seq)

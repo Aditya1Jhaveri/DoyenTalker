@@ -67,9 +67,9 @@ class OcclusionAwareGenerator(nn.Module):
             deformation = deformation.permute(0, 2, 3, 4, 1)
         return F.grid_sample(inp, deformation)
 
-    def forward(self, source_image, kp_driving, kp_source):
+    def forward(self, avatar_image, kp_driving, kp_source):
         # Encoding (downsampling) part
-        out = self.first(source_image)
+        out = self.first(avatar_image)
         for i in range(len(self.down_blocks)):
             out = self.down_blocks[i](out)
         out = self.second(out)
@@ -103,7 +103,7 @@ class OcclusionAwareGenerator(nn.Module):
                     occlusion_map = F.interpolate(occlusion_map, size=out.shape[2:], mode='bilinear')
                 out = out * occlusion_map
 
-            # output_dict["deformed"] = self.deform_input(source_image, deformation)  # 3d deformation cannot deform 2d image
+            # output_dict["deformed"] = self.deform_input(avatar_image, deformation)  # 3d deformation cannot deform 2d image
 
         # Decoding part
         out = self.resblocks_2d(out)
@@ -207,9 +207,9 @@ class OcclusionAwareSPADEGenerator(nn.Module):
             deformation = deformation.permute(0, 2, 3, 4, 1)
         return F.grid_sample(inp, deformation)
 
-    def forward(self, source_image, kp_driving, kp_source):
+    def forward(self, avatar_image, kp_driving, kp_source):
         # Encoding (downsampling) part
-        out = self.first(source_image)
+        out = self.first(avatar_image)
         for i in range(len(self.down_blocks)):
             out = self.down_blocks[i](out)
         out = self.second(out)

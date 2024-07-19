@@ -53,7 +53,7 @@ def main(args):
     
     tts_audio = os.path.join(path, "output.wav")
 
-    pic_path = args.source_image
+    pic_path = args.avatar_image
     audio_path = tts_audio
     save_dir = path
     os.makedirs(save_dir, exist_ok=True)
@@ -81,7 +81,7 @@ def main(args):
     print('3DMM Extraction for source image')
     timage_start = time.time()
     
-    first_coeff_path, crop_pic_path, crop_info = preprocess_model.generate(pic_path, first_frame_dir, args.preprocess, source_image_flag=True, pic_size=args.size)
+    first_coeff_path, crop_pic_path, crop_info = preprocess_model.generate(pic_path, first_frame_dir, args.preprocess, avatar_image_flag=True, pic_size=args.size)
     
     timage_end = time.time()
     timage = timage_end - timage_start
@@ -96,7 +96,7 @@ def main(args):
         ref_eyeblink_frame_dir = os.path.join(save_dir, ref_eyeblink_videoname)
         os.makedirs(ref_eyeblink_frame_dir, exist_ok=True)
         print('3DMM Extraction for the reference video providing eye blinking')
-        ref_eyeblink_coeff_path, _, _ = preprocess_model.generate(ref_eyeblink, ref_eyeblink_frame_dir, args.preprocess, source_image_flag=False)
+        ref_eyeblink_coeff_path, _, _ = preprocess_model.generate(ref_eyeblink, ref_eyeblink_frame_dir, args.preprocess, avatar_image_flag=False)
     else:
         ref_eyeblink_coeff_path = None
 
@@ -108,7 +108,7 @@ def main(args):
             ref_pose_frame_dir = os.path.join(save_dir, ref_pose_videoname)
             os.makedirs(ref_pose_frame_dir, exist_ok=True)
             print('3DMM Extraction for the reference video providing pose')
-            ref_pose_coeff_path, _, _ = preprocess_model.generate(ref_pose, ref_pose_frame_dir, args.preprocess, source_image_flag=False)
+            ref_pose_coeff_path, _, _ = preprocess_model.generate(ref_pose, ref_pose_frame_dir, args.preprocess, avatar_image_flag=False)
     else:
         ref_pose_coeff_path = None
 
@@ -153,7 +153,7 @@ if __name__ == '__main__':
     parser.add_argument("--message_file", type=str, help="path to the file containing the speech message")
     parser.add_argument("--voice", type=str, default='./assets/voice/ab_voice.mp3', help="path to speaker voice file")
     parser.add_argument("--lang", type=str, default='en', help="select the language for speaker voice option are (en - English , es - Spanish , fr - French , de - German , it - Italian , pt - Portuguese , pl - Polish , tr - Turkish , ru - Russian , nl - Dutch , cs - Czech , ar - Araic , zh-cn - Chinese (Simplified) , hu - Hungarian , ko - Korean , ja - Japanese , hi - Hindi)")
-    parser.add_argument("--source_image", default='./assets/avatar/male1.jpeg', help="path to source image")
+    parser.add_argument("--avatar_image", default='./assets/avatar/male1.jpeg', help="path to avatar image")
     parser.add_argument("--ref_eyeblink", default=None, help="path to reference video providing eye blinking")
     parser.add_argument("--ref_pose", default=None, help="path to reference video providing pose")
     parser.add_argument("--checkpoint_dir", default='./checkpoints', help="path to output")

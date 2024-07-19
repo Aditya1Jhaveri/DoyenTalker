@@ -16,13 +16,13 @@ def get_facerender_data(coeff_path, pic_path, first_coeff_path, audio_path,
     data={}
 
     img1 = Image.open(pic_path)
-    source_image = np.array(img1)
-    source_image = img_as_float32(source_image)
-    source_image = transform.resize(source_image, (size, size, 3))
-    source_image = source_image.transpose((2, 0, 1))
-    source_image_ts = torch.FloatTensor(source_image).unsqueeze(0)
-    source_image_ts = source_image_ts.repeat(batch_size, 1, 1, 1)
-    data['source_image'] = source_image_ts
+    avatar_image = np.array(img1)
+    avatar_image = img_as_float32(avatar_image)
+    avatar_image = transform.resize(avatar_image, (size, size, 3))
+    avatar_image = avatar_image.transpose((2, 0, 1))
+    avatar_image_ts = torch.FloatTensor(avatar_image).unsqueeze(0)
+    avatar_image_ts = avatar_image_ts.repeat(batch_size, 1, 1, 1)
+    data['avatar_image'] = avatar_image_ts
  
     source_semantics_dict = scio.loadmat(first_coeff_path)
     generated_dict = scio.loadmat(coeff_path)

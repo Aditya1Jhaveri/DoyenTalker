@@ -43,7 +43,7 @@ class Predictor(BasePredictor):
 
     def predict(
         self,
-        source_image: Path = Input(
+        avatar_image: Path = Input(
             description="Upload the source image, it can be video.mp4 or picture.png",
         ),
         driven_audio: Path = Input(
@@ -81,7 +81,7 @@ class Predictor(BasePredictor):
         )
 
         args = load_default()
-        args.pic_path = str(source_image)
+        args.pic_path = str(avatar_image)
         args.audio_path = str(driven_audio)
         device = "cuda"
         args.still = still
@@ -98,7 +98,7 @@ class Predictor(BasePredictor):
 
         print("3DMM Extraction for source image")
         first_coeff_path, crop_pic_path, crop_info = self.preprocess_model.generate(
-            args.pic_path, first_frame_dir, preprocess, source_image_flag=True
+            args.pic_path, first_frame_dir, preprocess, avatar_image_flag=True
         )
         if first_coeff_path is None:
             print("Can't get the coeffs of the input")

@@ -554,11 +554,11 @@ class audio2image(nn.Module):
 
         return {'value': kp_transformed}
 
-    def forward(self, source_image, target_audio):
-        pose_source = self.he_estimator_video(source_image)
+    def forward(self, avatar_image, target_audio):
+        pose_source = self.he_estimator_video(avatar_image)
         pose_generated = self.he_estimator_audio(target_audio)
-        kp_canonical = self.kp_extractor(source_image)
+        kp_canonical = self.kp_extractor(avatar_image)
         kp_source = self.keypoint_transformation(kp_canonical, pose_source)
         kp_transformed_generated = self.keypoint_transformation(kp_canonical, pose_generated)
-        generated = self.generator(source_image, kp_source=kp_source, kp_driving=kp_transformed_generated)
+        generated = self.generator(avatar_image, kp_source=kp_source, kp_driving=kp_transformed_generated)
         return generated
