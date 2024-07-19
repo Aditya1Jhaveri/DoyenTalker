@@ -37,7 +37,7 @@ class KeypointExtractor():
         ### gfpgan/weights
         try:
             import webui  # in webui
-            root_path = 'extensions/SadTalker/gfpgan/weights' 
+            root_path = 'extensions/DoyenTalker/gfpgan/weights' 
 
         except:
             root_path = 'gfpgan/weights'
