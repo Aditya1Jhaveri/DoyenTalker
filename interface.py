@@ -229,7 +229,7 @@ iface = gr.Interface(
     ],
     outputs=[gr.Video(format="mp4")],
     title="DoyenTalker",
-    description="Generate a video with DoyenTalker based on provided inputs.",
+    description="Generate an video with DoyenTalker based on provided inputs.",
     allow_flagging="never"
 )
 
