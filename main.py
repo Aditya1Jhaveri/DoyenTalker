@@ -169,7 +169,7 @@ if __name__ == '__main__':
     parser.add_argument("--cpu", dest="cpu", action="store_true") 
     parser.add_argument("--face3dvis", action="store_true", help="generate 3d face and 3d landmarks") 
     parser.add_argument("--still", type=bool, default=True, help="using the same pose parameters as the original image, fewer head motion.") 
-    parser.add_argument("--preprocess", default='full', choices=['crop', 'extcrop', 'resize', 'full', 'extfull'], help="how to preprocess the images") 
+    parser.add_argument("--preprocess", default='full', choices=['crop', 'extcrop', 'resize', 'full', 'extfull'], help="how to preprocess the image") 
     parser.add_argument("--verbose", action="store_true", help="saving the intermediate output or not") 
     parser.add_argument("--old_version", action="store_true", help="use the pth other than safetensor version") 
 
