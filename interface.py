@@ -22,20 +22,17 @@ avatar_folder = "assets/avatar"
 # Get list of images with multiple extensions
 image_extensions = ('.jpeg', '.jpg', '.png')
 voice_extensions = ('.mp3', '.wav')
-    
-def generate_video_interface(input_text, lang, voice, image, gfpgan, restoreformer):
-    
-    image_file = next((os.path.join(avatar_folder, f) for f in os.listdir(avatar_folder) if f.startswith(image) and f.endswith(image_extensions)), '')
-        
-    voice_file = next((os.path.join(voice_folder, f) for f in os.listdir(voice_folder) if f.startswith(voice) and f.endswith(voice_extensions)), '')
 
-    
-    enhancer = None
-    if gfpgan:
-        enhancer = "gfpgan"
-    elif restoreformer:
-        enhancer = "RestoreFormer"
-    
+def generate_video_interface(input_text, lang, voice, image, user_audio):
+    # Handle user audio
+    voice_file = None
+    if user_audio:
+        voice_file = user_audio
+    else:
+        voice_file = next((os.path.join(voice_folder, f) for f in os.listdir(voice_folder) if f.startswith(voice) and f.endswith(voice_extensions)), '')
+
+    image_file = next((os.path.join(avatar_folder, f) for f in os.listdir(avatar_folder) if f.startswith(image) and f.endswith(image_extensions)), '')
+
     args = Namespace(
         message_file=input_text,
         lang=lang,
@@ -44,7 +41,7 @@ def generate_video_interface(input_text, lang, voice, image, gfpgan, restoreform
         expression_scale=1.5,
         preprocess="full",
         still=True,
-        enhancer=enhancer,
+        enhancer=None,
         background_enhancer=None,
         checkpoint_dir='./checkpoints',
         pose_style=0,
@@ -89,14 +86,13 @@ def interface(args):
     
     tspeech_end = time.time()
     tspeech = tspeech_end - tspeech_start
-    print("\ngenerating speech:", tts_output)
+    print("\ngenerated speech:", tts_output)
 
     tts_audio = os.path.join(path, "output.wav")
 
     pic_path = args.avatar_image
     audio_path = tts_audio
     save_dir = path
-    os.makedirs(save_dir, exist_ok=True)
     pose_style = args.pose_style
     device = args.device
     batch_size = args.batch_size
@@ -132,7 +128,7 @@ def interface(args):
 
     if ref_eyeblink is not None:
         ref_eyeblink_videoname = os.path.splitext(os.path.split(ref_eyeblink)[-1])[0]
-        ref_eyeblink_frame_dir = os.path.join(save_dir, ref_eyeblink_videoname)
+        ref_eyeblink_frame_dir = os.path.join(save_dir, ref_eyeblink_frame_dir)
         os.makedirs(ref_eyeblink_frame_dir, exist_ok=True)
         print('3DMM Extraction for the reference video providing eye blinking')
         ref_eyeblink_coeff_path, _, _ = preprocess_model.generate(ref_eyeblink, ref_eyeblink_frame_dir, args.preprocess, avatar_image_flag=False)
@@ -187,9 +183,7 @@ def interface(args):
     return generated_video_path
 
 def update_image_and_voice(voice, image):
-   
     image_file = next((os.path.join(avatar_folder, f) for f in os.listdir(avatar_folder) if f.startswith(image) and f.endswith(image_extensions)), '')
-        
     voice_file = next((os.path.join(voice_folder, f) for f in os.listdir(voice_folder) if f.startswith(voice) and f.endswith(voice_extensions)), '')
     
     if not os.path.exists(voice_file):
@@ -203,17 +197,35 @@ def update_image_and_voice(voice, image):
 available_voices = [f.split('.')[0] for f in os.listdir(voice_folder) if f.endswith(voice_extensions)]
 available_images = [f.split('.')[0] for f in os.listdir(avatar_folder) if f.endswith(image_extensions)]
 
+def toggle_audio_input(radio_choice):
+    if radio_choice == "mic":
+        return gr.update(visible=True), gr.update(visible=False)
+    else:
+        return gr.update(visible=False), gr.update(visible=True)
 
+info = (
+    "Ladies and gentlemen,\n\n"
+    "Education is the cornerstone of our society, shaping the minds and futures of our youth. It is not merely about acquiring knowledge from textbooks, "
+    "but also about developing critical thinking, creativity, and the ability to adapt to an ever-changing world. Every child deserves access to quality education, "
+    "as it lays the foundation for personal growth, career success, and civic responsibility.\n\n"
+    "Investing in education means investing in the future. It empowers individuals to break the cycle of poverty, fosters innovation, and drives economic development. "
+    "In today's digital age, it is crucial to integrate technology into the learning process, making education more accessible and engaging for all.\n\n"
+    "Teachers play a pivotal role in this journey. Their dedication and passion inspire students to reach their full potential. Therefore, we must support and value our educators, "
+    "providing them with the resources and training they need to thrive.\n\n"
+    "Let us work together to create an inclusive and equitable education system that nurtures the talents of every student, ensuring a brighter, more prosperous future for all.\n\n"
+    "Thank you."
+)
 
 # Create Gradio interface
 iface = gr.Interface(
     fn=generate_video_interface,
     inputs=[
-        gr.Textbox(placeholder="Enter text to convert to speech", label="Input the text", info="Words Limit = 180 words", max_lines=3),
-        gr.Radio(label="Language", choices=['en', 'es', 'fr', 'de', 'it', 'pt', 'pl', 'tr', 'ru', 'nl', 'cs', 'ar', 'zh-cn', 'hu', 'ko', 'ja', 'hi'],info="en - English , es - Spanish , fr - French , de - German , it - Italian , pt - Portuguese , pl - Polish , tr - Turkish , ru - Russian , nl - Dutch , cs - Czech , ar - Araic , zh-cn - Chinese (Simplified) , hu - Hungarian , ko - Korean , ja - Japanese , hi - Hindi ", value="en"),
-        gr.Dropdown(label="Select Voice", choices=available_voices, value="ab_voice", interactive=True),
+        gr.Textbox(placeholder="Enter text to convert to speech", label="Input the text", info="Words Limit = 180 words for the better audio", max_lines=2),
+        gr.Radio(label="Language", choices=['en', 'es', 'fr', 'de', 'it', 'pt', 'pl', 'tr', 'ru', 'nl', 'cs', 'ar', 'zh-cn', 'hu', 'ko', 'ja', 'hi'], info="en - English, es - Spanish, fr - French, de - German, it - Italian, pt - Portuguese, pl - Polish, tr - Turkish, ru - Russian, nl - Dutch, cs - Czech, ar - Arabic, zh-cn - Chinese (Simplified), hu - Hungarian, ko - Korean, ja - Japanese, hi - Hindi", value="en"),
         gr.Dropdown(label="Select Avatar", choices=available_images, value="male1", interactive=True),
-        # gr.Checkbox(label="Enhancer for face", value=True),
+        gr.Radio(["mic", "predefined voice"], value="predefined voice", label="How would you like to choose the voice?").change(toggle_audio_input, inputs=None, outputs=["user_audio", "voice"]),
+        gr.Audio(label="Customize Voice (Read below paragraph for clear voice cloning)", sources=["microphone"], type="filepath", visible=False, info=info),
+        gr.Dropdown(label="Select Voice", choices=available_voices, value="ab_voice", interactive=True, visible=True),
     ],
     outputs=[gr.Video(format="mp4")],
     title="DoyenTalker",

@@ -235,10 +235,10 @@ class AnimateFromCoeff():
             return_path = av_path_enhancer
 
             try:
-                enhanced_images_gen_with_len = enhancer_generator_with_len(full_video_path, method=enhancer, bg_upsampler=background_enhancer).to(self.device)
+                enhanced_images_gen_with_len = enhancer_generator_with_len(full_video_path, method=enhancer, bg_upsampler=background_enhancer)
                 imageio.mimsave(enhanced_path, enhanced_images_gen_with_len, fps=float(25))
             except:
-                enhanced_images_gen_with_len = enhancer_list(full_video_path, method=enhancer, bg_upsampler=background_enhancer).to(self.device)
+                enhanced_images_gen_with_len = enhancer_list(full_video_path, method=enhancer, bg_upsampler=background_enhancer)
                 imageio.mimsave(enhanced_path, enhanced_images_gen_with_len, fps=float(25))
             
             save_video_with_watermark(enhanced_path, new_audio_path, av_path_enhancer, watermark= False)

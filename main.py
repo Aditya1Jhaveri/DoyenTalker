@@ -34,7 +34,7 @@ def main(args):
     input_voice = args.voice
     input_lang = args.lang
 
-    path = os.path.join("results", str(int(time.time())))
+    path = os.path.join(args.result_dir, str(int(time.time())))
     path_id = path
     print("path_id:", path_id, "path:", path)
     os.makedirs(path, exist_ok=True)
@@ -49,14 +49,13 @@ def main(args):
     
     tspeech_end = time.time()
     tspeech = tspeech_end - tspeech_start
-    print("\ngenerating speech:", tts_output)
+    print("\ngenerated speech:", tts_output)
     
     tts_audio = os.path.join(path, "output.wav")
 
     pic_path = args.avatar_image
     audio_path = tts_audio
     save_dir = path
-    os.makedirs(save_dir, exist_ok=True)
     pose_style = args.pose_style
     device = args.device
     batch_size = args.batch_size
@@ -161,7 +160,7 @@ if __name__ == '__main__':
     parser.add_argument("--pose_style", type=int, default=0, help="input pose style from [0, 46)")
     parser.add_argument("--batch_size", type=int, default=2, help="the batch size of facerender")
     parser.add_argument("--size", type=int, default=256, help="the image size of the facerender")
-    parser.add_argument("--expression_scale", type=float, default=1.0, help="a larger value will make the expression motion stronger.")
+    parser.add_argument("--expression_scale", type=float, default=1.0, help="a larger value will make the expression motion stronger (max 3.0).")
     parser.add_argument('--input_yaw', nargs='+', type=int, default=None, help="the input yaw degree of the user")
     parser.add_argument('--input_pitch', nargs='+', type=int, default=None, help="the input pitch degree of the user")
     parser.add_argument('--input_roll', nargs='+', type=int, default=None, help="the input roll degree of the user")
@@ -169,8 +168,8 @@ if __name__ == '__main__':
     parser.add_argument('--background_enhancer', type=str, default=None, help="background enhancer, [realesrgan]")
     parser.add_argument("--cpu", dest="cpu", action="store_true") 
     parser.add_argument("--face3dvis", action="store_true", help="generate 3d face and 3d landmarks") 
-    parser.add_argument("--still", action="store_true", help="using the same pose parameters as the original image, fewer head motion.") 
-    parser.add_argument("--preprocess", default='crop', choices=['crop', 'extcrop', 'resize', 'full', 'extfull'], help="how to preprocess the images") 
+    parser.add_argument("--still", type=bool, default=True, help="using the same pose parameters as the original image, fewer head motion.") 
+    parser.add_argument("--preprocess", default='full', choices=['crop', 'extcrop', 'resize', 'full', 'extfull'], help="how to preprocess the images") 
     parser.add_argument("--verbose", action="store_true", help="saving the intermediate output or not") 
     parser.add_argument("--old_version", action="store_true", help="use the pth other than safetensor version") 
 
