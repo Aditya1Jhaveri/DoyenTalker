@@ -6,6 +6,7 @@ import os, sys, time
 from argparse import ArgumentParser
 import datetime as dt
 import humanize
+from moviepy.editor import concatenate_videoclips, VideoFileClip
 
 
 from src.speech import generate_speech
@@ -15,6 +16,13 @@ from src.facerender.animate import AnimateFromCoeff
 from src.generate_audio_batch import get_data
 from src.generate_facerender_batch import get_facerender_data
 from src.utils.init_path import init_path
+
+
+
+def split_text(text, max_words=100):
+    # Split the text into chunks of max_words each
+    words = text.split()
+    return [' '.join(words[i:i + max_words]) for i in range(0, len(words), max_words)]
 
 def main(args):
     tstart = time.time()
@@ -38,23 +46,42 @@ def main(args):
     path_id = path
     print("path_id:", path_id, "path:", path)
     os.makedirs(path, exist_ok=True)
- 
-    tts_output = "output.wav"
-
+    
+    # Generate audio for chunks of text
+    audio_files = []
+    text_chunks = split_text(message)  # Function to split text into chunks
+    
+    tspeech_start = time.time()  # Start timing speech generation
+    
     print("-----------------------------------------")
     print("generating speech")
-    tspeech_start = time.time()
     
-    generate_speech(path_id, tts_output, message, input_voice, input_lang)
+    for i, message in enumerate(text_chunks):
+        audio_file = f"output_part_{i + 1}.wav"
+        audio_path = os.path.join(path, audio_file)
+        try:
+            generate_speech(path, audio_file, message, input_voice, input_lang)
+            audio_files.append(audio_path)
+        except Exception as e:
+            print(f"An error occurred while generating audio for text {i + 1}: {e}")
+ 
+    # tts_output = "output.wav"
+
+    # print("-----------------------------------------")
+    # print("generating speech")
+    # tspeech_start = time.time()
+    
+    # generate_speech(path_id, tts_output, message, input_voice, input_lang)
     
     tspeech_end = time.time()
     tspeech = tspeech_end - tspeech_start
-    print("\ngenerated speech:", tts_output)
     
-    tts_audio = os.path.join(path, "output.wav")
+    # tts_audio = os.path.join(path, "output.wav")
+    
+    video_files = []
 
     pic_path = args.avatar_image
-    audio_path = tts_audio
+    # audio_path = tts_audio
     save_dir = path
     pose_style = args.pose_style
     device = args.device
@@ -110,33 +137,57 @@ def main(args):
             ref_pose_coeff_path, _, _ = preprocess_model.generate(ref_pose, ref_pose_frame_dir, args.preprocess, avatar_image_flag=False)
     else:
         ref_pose_coeff_path = None
+        
+    
+        # Process each audio file
+    for i, audio_path in enumerate(audio_files):
+        # Generate video for the current audio file
+        batch = get_data(first_coeff_path, audio_path, device, ref_eyeblink_coeff_path, still=args.still)
+        coeff_path = audio_to_coeff.generate(batch, save_dir, pose_style, ref_pose_coeff_path)
+        
+        # 3dface render
+        if args.face3dvis:
+            from src.face3d.visualize import gen_composed_video
+            gen_composed_video(args, device, first_coeff_path, coeff_path, audio_path, os.path.join(save_dir, f'3dface_part_{i + 1}.mp4'))
+        
+        # coeff2video
+        tanimate_start = time.time()
+        
+        data = get_facerender_data(coeff_path, crop_pic_path, first_coeff_path, audio_path,
+                                   batch_size, input_yaw_list, input_pitch_list, input_roll_list,
+                                   expression_scale=args.expression_scale, still_mode=args.still, preprocess=args.preprocess, size=args.size)
 
-    # audio2ceoff
-    batch = get_data(first_coeff_path, audio_path, device, ref_eyeblink_coeff_path, still=args.still)
-    coeff_path = audio_to_coeff.generate(batch, save_dir, pose_style, ref_pose_coeff_path)
-
-    # 3dface render
-    if args.face3dvis:
-        from src.face3d.visualize import gen_composed_video
-        gen_composed_video(args, device, first_coeff_path, coeff_path, audio_path, os.path.join(save_dir, '3dface.mp4'))
+        result = animate_from_coeff.generate(data, save_dir, pic_path, crop_info,
+                                             enhancer=args.enhancer, background_enhancer=args.background_enhancer, preprocess=args.preprocess, img_size=args.size)
+        tanimate_end = time.time()
+        tanimate = tanimate_end - tanimate_start
+        
+        # Save video path
+        video_file = os.path.join(save_dir, f'generated_video_part_{i + 1}.mp4')
+        shutil.move(result, video_file)
+        video_files.append(video_file)
+        print(f'Video for part {i + 1} is named:', video_file)
+        
     
-    # coeff2video
-    tanimate_start = time.time()
-    data = get_facerender_data(coeff_path, crop_pic_path, first_coeff_path, audio_path, 
-                               batch_size, input_yaw_list, input_pitch_list, input_roll_list,
-                               expression_scale=args.expression_scale, still_mode=args.still, preprocess=args.preprocess, size=args.size)
+    # Combine all video files
+    tcombine_video_start = time.time()  
+    combined_video_path = os.path.join(save_dir, 'combined_generated_video.mp4')
+    clips = [VideoFileClip(v) for v in video_files]
     
-    result = animate_from_coeff.generate(data, save_dir, pic_path, crop_info,
-                                         enhancer=args.enhancer, background_enhancer=args.background_enhancer, preprocess=args.preprocess, img_size=args.size)
     
-    tanimate_end = time.time()
-    tanimate = tanimate_end - tanimate_start
+  
+    final_clip = concatenate_videoclips(clips, method="compose")
+    final_clip.write_videofile(combined_video_path, codec="libx264")
     
-    shutil.move(result, save_dir+'.mp4')
+    tcombine_video_end = time.time()  
+    t_combine_video = tcombine_video_end - tcombine_video_start
+    
+    shutil.move(combined_video_path, save_dir+'.mp4')
     print('The generated video is named:', save_dir+'.mp4')
 
     if not args.verbose:
         shutil.rmtree(save_dir)
+
 
     print("done")
     print("Overall timing")
@@ -144,8 +195,10 @@ def main(args):
     print("generating speech:", humanize.naturaldelta(dt.timedelta(seconds=tspeech)))
     print("generating avatar image:", humanize.naturaldelta(dt.timedelta(seconds=timage)))
     print("animating face:", humanize.naturaldelta(dt.timedelta(seconds=tanimate)))
+    print("Combined video:", humanize.naturaldelta(dt.timedelta(seconds=t_combine_video)))
     print("total time:", humanize.naturaldelta(dt.timedelta(seconds=int(time.time() - tstart))))
-
+    
+    
 if __name__ == '__main__':
     parser = ArgumentParser()
     

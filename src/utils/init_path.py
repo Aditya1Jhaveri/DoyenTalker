@@ -44,4 +44,5 @@ def init_path(checkpoint_dir, config_dir, size=512, old_version=False, preproces
         doyentalker_paths['mappingnet_checkpoint'] = os.path.join(checkpoint_dir, 'mapping_00229-model.pth.tar')
         doyentalker_paths['facerender_yaml'] = os.path.join(config_dir, 'facerender.yaml')
 
+
     return doyentalker_paths

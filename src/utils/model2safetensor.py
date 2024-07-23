@@ -17,7 +17,7 @@ from src.facerender.modules.generator import OcclusionAwareGenerator, OcclusionA
 
 from src.audio2pose_models.audio2pose import Audio2Pose
 from src.audio2exp_models.networks import SimpleWrapperV2 
-from src.test_audio2coeff import load_cpk
+from src.audio2coeff import load_cpk
 
 size = 256
 ############ face vid2vid

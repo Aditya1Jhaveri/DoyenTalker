@@ -1,11 +1,12 @@
-import gradio as gr
-import shutil
-import torch
-import time
 import os
+import shutil
+import time
+import torch
 import datetime as dt
 import humanize
 from argparse import Namespace
+from moviepy.editor import concatenate_videoclips, VideoFileClip
+import gradio as gr
 
 # Import your existing functions and modules
 from src.speech import generate_speech
@@ -23,7 +24,12 @@ avatar_folder = "assets/avatar"
 image_extensions = ('.jpeg', '.jpg', '.png')
 voice_extensions = ('.mp3', '.wav')
 
-def generate_video_interface(input_text, lang, voice, image, user_audio):
+def split_text(text, max_words=100):
+    # Split the text into chunks of max_words each
+    words = text.split()
+    return [' '.join(words[i:i + max_words]) for i in range(0, len(words), max_words)]
+
+def generate_video_interface(input_text, lang, voice, image, user_audio, gfpgan):
     # Handle user audio
     voice_file = None
     if user_audio:
@@ -32,6 +38,12 @@ def generate_video_interface(input_text, lang, voice, image, user_audio):
         voice_file = next((os.path.join(voice_folder, f) for f in os.listdir(voice_folder) if f.startswith(voice) and f.endswith(voice_extensions)), '')
 
     image_file = next((os.path.join(avatar_folder, f) for f in os.listdir(avatar_folder) if f.startswith(image) and f.endswith(image_extensions)), '')
+
+    # enhancer = None
+    # if gfpgan:
+    #     enhancer = "gfpgan"
+    # else:
+    #     enhancer = "RestoreFormer"
 
     args = Namespace(
         message_file=input_text,
@@ -71,27 +83,32 @@ def interface(args):
     input_lang = args.lang
     text_message = args.message_file
 
+    # Create unique directories for different steps
     path = os.path.join("results", str(int(time.time())))
-    path_id = path
-    print("path_id:", path_id, "path:", path)
     os.makedirs(path, exist_ok=True)
 
-    tts_output = "output.wav"
+    # Generate audio for chunks of text
+    audio_files = []
+    text_chunks = split_text(text_message)  # Function to split text into chunks
+    
+    tspeech_start = time.time()  # Start timing speech generation
 
-    print("-----------------------------------------")
-    print("generating speech")
-    tspeech_start = time.time()
-    
-    generate_speech(path_id, tts_output, text_message, input_voice, input_lang)
-    
-    tspeech_end = time.time()
+    for i, text in enumerate(text_chunks):
+        audio_file = f"output_part_{i + 1}.wav"
+        audio_path = os.path.join(path, audio_file)
+        try:
+            generate_speech(path, audio_file, text, input_voice, input_lang)
+            audio_files.append(audio_path)
+        except Exception as e:
+            print(f"An error occurred while generating audio for text {i + 1}: {e}")
+
+    tspeech_end = time.time()  
     tspeech = tspeech_end - tspeech_start
-    print("\ngenerated speech:", tts_output)
 
-    tts_audio = os.path.join(path, "output.wav")
-
+    video_files = []
+    
+    # Process image and generate videos for each audio segment
     pic_path = args.avatar_image
-    audio_path = tts_audio
     save_dir = path
     pose_style = args.pose_style
     device = args.device
@@ -128,7 +145,7 @@ def interface(args):
 
     if ref_eyeblink is not None:
         ref_eyeblink_videoname = os.path.splitext(os.path.split(ref_eyeblink)[-1])[0]
-        ref_eyeblink_frame_dir = os.path.join(save_dir, ref_eyeblink_frame_dir)
+        ref_eyeblink_frame_dir = os.path.join(save_dir, ref_eyeblink_videoname)
         os.makedirs(ref_eyeblink_frame_dir, exist_ok=True)
         print('3DMM Extraction for the reference video providing eye blinking')
         ref_eyeblink_coeff_path, _, _ = preprocess_model.generate(ref_eyeblink, ref_eyeblink_frame_dir, args.preprocess, avatar_image_flag=False)
@@ -147,30 +164,49 @@ def interface(args):
     else:
         ref_pose_coeff_path = None
 
-    # audio2coeff
-    batch = get_data(first_coeff_path, audio_path, device, ref_eyeblink_coeff_path, still=args.still)
-    coeff_path = audio_to_coeff.generate(batch, save_dir, pose_style, ref_pose_coeff_path)
 
-    # 3dface render
-    if args.face3dvis:
-        from src.face3d.visualize import gen_composed_video
-        gen_composed_video(args, device, first_coeff_path, coeff_path, audio_path, os.path.join(save_dir, '3dface.mp4'))
+    # Process each audio file
+    for i, audio_path in enumerate(audio_files):
+        # Generate video for the current audio file
+        batch = get_data(first_coeff_path, audio_path, device, ref_eyeblink_coeff_path, still=args.still)
+        coeff_path = audio_to_coeff.generate(batch, save_dir, pose_style, ref_pose_coeff_path)
+        
+        # 3dface render
+        if args.face3dvis:
+            from src.face3d.visualize import gen_composed_video
+            gen_composed_video(args, device, first_coeff_path, coeff_path, audio_path, os.path.join(save_dir, f'3dface_part_{i + 1}.mp4'))
+        
+        # coeff2video
+        tanimate_start = time.time()
+        
+        data = get_facerender_data(coeff_path, crop_pic_path, first_coeff_path, audio_path,
+                                   batch_size, input_yaw_list, input_pitch_list, input_roll_list,
+                                   expression_scale=args.expression_scale, still_mode=args.still, preprocess=args.preprocess, size=args.size)
 
-    # coeff2video
-    tanimate_start = time.time()
+        result = animate_from_coeff.generate(data, save_dir, pic_path, crop_info,
+                                             enhancer=args.enhancer, background_enhancer=args.background_enhancer, preprocess=args.preprocess, img_size=args.size)
+        tanimate_end = time.time()
+        tanimate = tanimate_end - tanimate_start
+        
+        # Save video path
+        video_file = os.path.join(save_dir, f'generated_video_part_{i + 1}.mp4')
+        shutil.move(result, video_file)
+        video_files.append(video_file)
+        print(f'Video for part {i + 1} is named:', video_file)
+        
     
-    data = get_facerender_data(coeff_path, crop_pic_path, first_coeff_path, audio_path,
-                               batch_size, input_yaw_list, input_pitch_list, input_roll_list,
-                               expression_scale=args.expression_scale, still_mode=args.still, preprocess=args.preprocess, size=args.size)
-
-    result = animate_from_coeff.generate(data, save_dir, pic_path, crop_info,
-                                         enhancer=args.enhancer, background_enhancer=args.background_enhancer, preprocess=args.preprocess, img_size=args.size)
-    tanimate_end = time.time()
-    tanimate = tanimate_end - tanimate_start
-
-    generated_video_path = os.path.join(save_dir, 'generated_video.mp4')
-    shutil.move(result, generated_video_path)
-    print('The generated video is named:', generated_video_path)
+    # Combine all video files
+    
+    tcombine_video_start = time.time()  
+    combined_video_path = os.path.join(save_dir, 'combined_generated_video.mp4')
+    clips = [VideoFileClip(v) for v in video_files]
+    
+    
+    final_clip = concatenate_videoclips(clips, method="compose")
+    final_clip.write_videofile(combined_video_path, codec="libx264")
+    
+    tcombine_video_end = time.time()  
+    t_combine_video = tcombine_video_end - tcombine_video_start
 
     print("done")
     print("Overall timing")
@@ -178,9 +214,10 @@ def interface(args):
     print("generating speech:", humanize.naturaldelta(dt.timedelta(seconds=tspeech)))
     print("generating avatar image:", humanize.naturaldelta(dt.timedelta(seconds=timage)))
     print("animating face:", humanize.naturaldelta(dt.timedelta(seconds=tanimate)))
+    print("Combined video:", humanize.naturaldelta(dt.timedelta(seconds=t_combine_video)))
     print("total time:", humanize.naturaldelta(dt.timedelta(seconds=int(time.time() - tstart))))
 
-    return generated_video_path
+    return combined_video_path
 
 def update_image_and_voice(voice, image):
     image_file = next((os.path.join(avatar_folder, f) for f in os.listdir(avatar_folder) if f.startswith(image) and f.endswith(image_extensions)), '')
@@ -198,12 +235,12 @@ available_voices = [f.split('.')[0] for f in os.listdir(voice_folder) if f.endsw
 available_images = [f.split('.')[0] for f in os.listdir(avatar_folder) if f.endswith(image_extensions)]
 
 def toggle_audio_input(radio_choice):
-    if radio_choice == "mic":
-        return gr.update(visible=True), gr.update(visible=False)
-    else:
-        return gr.update(visible=False), gr.update(visible=True)
+        if radio_choice == "mic":
+            return gr.update(visible=True), gr.update(visible=False), gr.update(visible=True)
+        else:
+            return gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)
 
-info = (
+speech = (
     "Ladies and gentlemen,\n\n"
     "Education is the cornerstone of our society, shaping the minds and futures of our youth. It is not merely about acquiring knowledge from textbooks, "
     "but also about developing critical thinking, creativity, and the ability to adapt to an ever-changing world. Every child deserves access to quality education, "
@@ -216,21 +253,59 @@ info = (
     "Thank you."
 )
 
-# Create Gradio interface
-iface = gr.Interface(
-    fn=generate_video_interface,
-    inputs=[
-        gr.Textbox(placeholder="Enter text to convert to speech", label="Input the text", info="Words Limit = 180 words for the better audio", max_lines=2),
-        gr.Radio(label="Language", choices=['en', 'es', 'fr', 'de', 'it', 'pt', 'pl', 'tr', 'ru', 'nl', 'cs', 'ar', 'zh-cn', 'hu', 'ko', 'ja', 'hi'], info="en - English, es - Spanish, fr - French, de - German, it - Italian, pt - Portuguese, pl - Polish, tr - Turkish, ru - Russian, nl - Dutch, cs - Czech, ar - Arabic, zh-cn - Chinese (Simplified), hu - Hungarian, ko - Korean, ja - Japanese, hi - Hindi", value="en"),
-        gr.Dropdown(label="Select Avatar", choices=available_images, value="male1", interactive=True),
-        gr.Radio(["mic", "predefined voice"], value="predefined voice", label="How would you like to choose the voice?").change(toggle_audio_input, inputs=None, outputs=["user_audio", "voice"]),
-        gr.Audio(label="Customize Voice (Read below paragraph for clear voice cloning)", sources=["microphone"], type="filepath", visible=False, info=info),
-        gr.Dropdown(label="Select Voice", choices=available_voices, value="ab_voice", interactive=True, visible=True),
-    ],
-    outputs=[gr.Video(format="mp4")],
-    title="DoyenTalker",
-    description="Generate an video with DoyenTalker based on provided inputs.",
-    allow_flagging="never"
-)
+# Define the Gradio interface using Blocks
+with gr.Blocks() as iface:
+    gr.Markdown("## Generate Video with Voice Cloning and Avatars")
+
+    text_input = gr.Textbox(
+        lines=2,
+        placeholder="Enter the text you want to generate speech for",
+        label="Input Text",
+        info="Words Limit = 180 words for better audio"
+    )
+    lang_choice = gr.Radio(
+        label="Language",
+        choices=['en', 'es', 'fr', 'de', 'it', 'pt', 'pl', 'tr', 'ru', 'nl', 'cs', 'ar', 'zh-cn', 'hu', 'ko', 'ja', 'hi'],
+        info="en - English, es - Spanish, fr - French, de - German, it - Italian, pt - Portuguese, pl - Polish, tr - Turkish, ru - Russian, nl - Dutch, cs - Czech, ar - Arabic, zh-cn - Chinese (Simplified), hu - Hungarian, ko - Korean, ja - Japanese, hi - Hindi",
+        value="en"
+    )
+    avatar_dropdown = gr.Dropdown(
+        label="Select Avatar",
+        choices=available_images,
+        value="male1",
+        interactive=True
+    )
+    radio_choice = gr.Radio(
+        ["mic", "predefined voice"],
+        value="predefined voice",
+        label="How would you like to choose the voice?",
+    )
+    user_audio = gr.Audio(
+        label="Customize Voice (Read below paragraph for clear voice cloning)",
+        sources=["microphone"],
+        type="filepath",
+        visible=False
+    )
+    voice_dropdown = gr.Dropdown(
+        label="Select Voice",
+        choices=available_voices,
+        value="ab_voice",
+        interactive=True,
+        visible=True
+    )
+    markdown = gr.Markdown(speech, visible=False)
+    # gfpgan= gr.Checkbox(label="Enhancer for face", value=True),
+    
+    # Update components based on radio choice
+    radio_choice.change(toggle_audio_input, inputs=[radio_choice], outputs=[user_audio, voice_dropdown, markdown])
+    
+    video_output = gr.Video(format="mp4")
+    
+    # Define the Interface within Blocks
+    gr.Interface(
+        fn=generate_video_interface,
+        inputs=[text_input, lang_choice, voice_dropdown, avatar_dropdown, user_audio],
+        outputs=video_output
+    )
 
 iface.launch(debug=True)

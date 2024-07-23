@@ -19,16 +19,20 @@ def generate_speech(path_id, outfile, text, speaker_wav=None, language="en"):
     
     return output_path
 
+def read_message_from_file(file_path):
+    with open(file_path, 'r') as file:
+        return file.read()
+
+def split_text(text, max_words=100):
+    # Split the text into chunks of max_words each
+    words = text.split()
+    return [' '.join(words[i:i + max_words]) for i in range(0, len(words), max_words)]
+
 def speech(args):
-    #  Create a unique path based on the current timestamp
+    # Create a unique path based on the current timestamp
     path_id = os.path.join("temp", str(int(time.time())))
     os.makedirs(path_id, exist_ok=True)
     
-    # Function to read the content of the message file
-    def read_message_from_file(file_path):
-        with open(file_path, 'r') as file:
-            return file.read()
-
     # Initialize variables
     message = None
     
@@ -37,14 +41,21 @@ def speech(args):
         message = read_message_from_file(args.message_file)
         
     speaker_wav = args.voice
-    outfile = "output.wav"
     language = args.lang
+            
+        # Generate audio for chunks of text
+    audio_files = []
+    text_chunks = split_text(message)  # Function to split text into chunks
     
-    try:
-        output_path = generate_speech(path_id, outfile,text=message, speaker_wav=speaker_wav, language=language)
-        print(f"Speech saved to {output_path}")
-    except Exception as e:
-        print(f"An error occurred: {e}")
+
+    for i, message in enumerate(text_chunks):
+        outfile = f"output_part_{i + 1}.wav"
+        try:
+            output_path = generate_speech(path_id, outfile, text=message, speaker_wav=speaker_wav, language=language)
+            audio_files.append(output_path)
+        except Exception as e:
+            print(f"An error occurred while generating audio for text {i + 1}: {e}")
+
 
 if __name__ == '__main__':
     parser = ArgumentParser()
@@ -56,4 +67,3 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     speech(args)
-   
