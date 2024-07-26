@@ -9,6 +9,7 @@ from moviepy.editor import concatenate_videoclips, VideoFileClip
 import gradio as gr
 
 # Import your existing functions and modules
+from src.face3d.visualize import gen_composed_video
 from src.speech import generate_speech
 from src.utils.preprocess import CropAndExtract
 from src.audio2coeff import Audio2Coeff
@@ -173,7 +174,6 @@ def interface(args):
         
         # 3dface render
         if args.face3dvis:
-            from src.face3d.visualize import gen_composed_video
             gen_composed_video(args, device, first_coeff_path, coeff_path, audio_path, os.path.join(save_dir, f'3dface_part_{i + 1}.mp4'))
         
         # coeff2video
@@ -255,13 +255,12 @@ speech = (
 
 # Define the Gradio interface using Blocks
 with gr.Blocks() as iface:
-    gr.Markdown("## Generate Video with Voice Cloning and Avatars")
+    # gr.Markdown("## Generate Video with Voice Cloning and Avatars")
 
     text_input = gr.Textbox(
         lines=2,
         placeholder="Enter the text you want to generate speech for",
         label="Input Text",
-        info="Words Limit = 180 words for better audio"
     )
     lang_choice = gr.Radio(
         label="Language",
@@ -281,7 +280,7 @@ with gr.Blocks() as iface:
         label="How would you like to choose the voice?",
     )
     user_audio = gr.Audio(
-        label="Customize Voice (Read below paragraph for clear voice cloning)",
+        label="Customize Voice (Read above paragraph for clear voice cloning)",
         sources=["microphone"],
         type="filepath",
         visible=False
@@ -289,7 +288,7 @@ with gr.Blocks() as iface:
     voice_dropdown = gr.Dropdown(
         label="Select Voice",
         choices=available_voices,
-        value="ab_voice",
+        value="trump_voice",
         interactive=True,
         visible=True
     )
@@ -305,7 +304,10 @@ with gr.Blocks() as iface:
     gr.Interface(
         fn=generate_video_interface,
         inputs=[text_input, lang_choice, voice_dropdown, avatar_dropdown, user_audio],
-        outputs=video_output
+        outputs=video_output,
+        title="DoyenTalker",
+        description="Generate a video with DoyenTalker based on provided inputs.",
+        allow_flagging="never"
     )
 
 iface.launch(debug=True)

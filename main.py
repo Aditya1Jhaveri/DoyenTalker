@@ -1,4 +1,3 @@
-from glob import glob
 import shutil
 import torch
 import time 
@@ -8,7 +7,7 @@ import datetime as dt
 import humanize
 from moviepy.editor import concatenate_videoclips, VideoFileClip
 
-
+from src.face3d.visualize import gen_composed_video
 from src.speech import generate_speech
 from src.utils.preprocess import CropAndExtract
 from src.audio2coeff import Audio2Coeff  
@@ -139,7 +138,7 @@ def main(args):
         ref_pose_coeff_path = None
         
     
-        # Process each audio file
+    # Process each audio file
     for i, audio_path in enumerate(audio_files):
         # Generate video for the current audio file
         batch = get_data(first_coeff_path, audio_path, device, ref_eyeblink_coeff_path, still=args.still)
@@ -147,7 +146,6 @@ def main(args):
         
         # 3dface render
         if args.face3dvis:
-            from src.face3d.visualize import gen_composed_video
             gen_composed_video(args, device, first_coeff_path, coeff_path, audio_path, os.path.join(save_dir, f'3dface_part_{i + 1}.mp4'))
         
         # coeff2video
@@ -174,16 +172,13 @@ def main(args):
     combined_video_path = os.path.join(save_dir, 'combined_generated_video.mp4')
     clips = [VideoFileClip(v) for v in video_files]
     
-    
-  
     final_clip = concatenate_videoclips(clips, method="compose")
     final_clip.write_videofile(combined_video_path, codec="libx264")
     
     tcombine_video_end = time.time()  
     t_combine_video = tcombine_video_end - tcombine_video_start
     
-    shutil.move(combined_video_path, save_dir+'.mp4')
-    print('The generated video is named:', save_dir+'.mp4')
+
 
     if not args.verbose:
         shutil.rmtree(save_dir)
