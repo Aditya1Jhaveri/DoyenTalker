@@ -179,7 +179,7 @@ def interface(args):
     # Process each audio file
     for i, audio_path in enumerate(audio_files):
         # Generate video for the current audio file
-        batch = get_data(first_coeff_path, audio_path, device, ref_eyeblink_coeff_path, still=args.still)
+        # batch = get_data(first_coeff_path, audio_path, device, ref_eyeblink_coeff_path, still=args.still)
         coeff_path = audio_to_coeff.generate(batch, save_dir, pose_style, ref_pose_coeff_path)
         
         # 3dface render
