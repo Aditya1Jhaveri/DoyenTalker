@@ -7,7 +7,6 @@ import datetime as dt
 import humanize
 from moviepy.editor import concatenate_videoclips, VideoFileClip
 
-from src.face3d.visualize import gen_composed_video
 from src.speech import generate_speech
 from src.utils.preprocess import CropAndExtract
 from src.audio2coeff import Audio2Coeff  
@@ -146,6 +145,7 @@ def main(args):
         
         # 3dface render
         if args.face3dvis:
+            from src.face3d.visualize import gen_composed_video
             gen_composed_video(args, device, first_coeff_path, coeff_path, audio_path, os.path.join(save_dir, f'3dface_part_{i + 1}.mp4'))
         
         # coeff2video

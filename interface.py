@@ -9,7 +9,6 @@ from moviepy.editor import concatenate_videoclips, VideoFileClip
 import gradio as gr
 
 # Import your existing functions and modules
-from src.face3d.visualize import gen_composed_video
 from src.speech import generate_speech
 from src.utils.preprocess import CropAndExtract
 from src.audio2coeff import Audio2Coeff
@@ -30,21 +29,30 @@ def split_text(text, max_words=100):
     words = text.split()
     return [' '.join(words[i:i + max_words]) for i in range(0, len(words), max_words)]
 
-def generate_video_interface(input_text, lang, voice, image, user_audio, gfpgan):
+def generate_video_interface(input_text, lang, voice, image, user_audio, user_avatar, gfpgan):
+    
     # Handle user audio
     voice_file = None
     if user_audio:
         voice_file = user_audio
     else:
         voice_file = next((os.path.join(voice_folder, f) for f in os.listdir(voice_folder) if f.startswith(voice) and f.endswith(voice_extensions)), '')
+        
+    # Handle user avatar
+    image_file = None
+    if user_avatar:
+        image_file = user_avatar
+    else:
+        image_file = next((os.path.join(avatar_folder, f) for f in os.listdir(avatar_folder) if f.startswith(image) and f.endswith(image_extensions)), '')
 
-    image_file = next((os.path.join(avatar_folder, f) for f in os.listdir(avatar_folder) if f.startswith(image) and f.endswith(image_extensions)), '')
 
-    # enhancer = None
     # if gfpgan:
     #     enhancer = "gfpgan"
-    # else:
+    # elif gfpgan:
     #     enhancer = "RestoreFormer"
+    # else:
+    #     enhancer = None
+    
 
     args = Namespace(
         message_file=input_text,
@@ -174,6 +182,7 @@ def interface(args):
         
         # 3dface render
         if args.face3dvis:
+            from src.face3d.visualize import gen_composed_video
             gen_composed_video(args, device, first_coeff_path, coeff_path, audio_path, os.path.join(save_dir, f'3dface_part_{i + 1}.mp4'))
         
         # coeff2video
@@ -234,11 +243,17 @@ def update_image_and_voice(voice, image):
 available_voices = [f.split('.')[0] for f in os.listdir(voice_folder) if f.endswith(voice_extensions)]
 available_images = [f.split('.')[0] for f in os.listdir(avatar_folder) if f.endswith(image_extensions)]
 
-def toggle_audio_input(radio_choice):
-        if radio_choice == "mic":
+def toggle_audio_input(voice_choice):
+        if voice_choice == "mic":
             return gr.update(visible=True), gr.update(visible=False), gr.update(visible=True)
         else:
             return gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)
+
+def toggle_avatar_input(avatar_choice):
+        if avatar_choice == "custom avatar":
+            return gr.update(visible=True), gr.update(visible=False)
+        else:
+            return gr.update(visible=False), gr.update(visible=True)
 
 speech = (
     "Ladies and gentlemen,\n\n"
@@ -255,11 +270,10 @@ speech = (
 
 # Define the Gradio interface using Blocks
 with gr.Blocks() as iface:
-    # gr.Markdown("## Generate Video with Voice Cloning and Avatars")
-
+    
     text_input = gr.Textbox(
         lines=2,
-        placeholder="Enter the text you want to generate speech for",
+        placeholder="Enter the text you want to generate for speech",
         label="Input Text",
     )
     lang_choice = gr.Radio(
@@ -268,13 +282,22 @@ with gr.Blocks() as iface:
         info="en - English, es - Spanish, fr - French, de - German, it - Italian, pt - Portuguese, pl - Polish, tr - Turkish, ru - Russian, nl - Dutch, cs - Czech, ar - Arabic, zh-cn - Chinese (Simplified), hu - Hungarian, ko - Korean, ja - Japanese, hi - Hindi",
         value="en"
     )
+    avatar_choice = gr.Radio(
+        ["custom avatar", "predefined avatar"],
+        value="predefined avatar",
+        label="How would you like to choose the Avatar?",
+    )
+    user_avatar = gr.File(
+         label="Upload your avatar",
+         visible=False
+    )
     avatar_dropdown = gr.Dropdown(
         label="Select Avatar",
         choices=available_images,
         value="male1",
         interactive=True
     )
-    radio_choice = gr.Radio(
+    voice_choice = gr.Radio(
         ["mic", "predefined voice"],
         value="predefined voice",
         label="How would you like to choose the voice?",
@@ -295,15 +318,18 @@ with gr.Blocks() as iface:
     markdown = gr.Markdown(speech, visible=False)
     # gfpgan= gr.Checkbox(label="Enhancer for face", value=True),
     
-    # Update components based on radio choice
-    radio_choice.change(toggle_audio_input, inputs=[radio_choice], outputs=[user_audio, voice_dropdown, markdown])
+    # Update components based on voice choice
+    voice_choice.change(toggle_audio_input, inputs=[voice_choice], outputs=[user_audio, voice_dropdown, markdown])
+    
+    # Update components based on avatar choice
+    avatar_choice.change(toggle_avatar_input, inputs=[avatar_choice], outputs=[user_avatar, avatar_dropdown])
     
     video_output = gr.Video(format="mp4")
     
     # Define the Interface within Blocks
     gr.Interface(
         fn=generate_video_interface,
-        inputs=[text_input, lang_choice, voice_dropdown, avatar_dropdown, user_audio],
+        inputs=[text_input, lang_choice, voice_dropdown, avatar_dropdown, user_audio, user_avatar],
         outputs=video_output,
         title="DoyenTalker",
         description="Generate a video with DoyenTalker based on provided inputs.",
