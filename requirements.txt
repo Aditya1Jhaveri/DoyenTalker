@@ -13,7 +13,7 @@ yacs==0.1.8
 pyyaml  
 joblib==1.1.0
 scikit-image==0.19.3
-basicsr==1.4.2
+basicsr
 facexlib==0.3.0
 gradio
 gfpgan
@@ -22,3 +22,7 @@ safetensors
 kornia
 scipy
 gdown
+torch 
+torchvision 
+torchaudio
+ffmpeg

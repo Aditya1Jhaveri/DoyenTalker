@@ -169,7 +169,7 @@ def main(args):
     
     # Combine all video files
     tcombine_video_start = time.time()  
-    combined_video_path = os.path.join(save_dir, 'combined_generated_video.mp4')
+    combined_video_path = os.path.join(save_dir)
     clips = [VideoFileClip(v) for v in video_files]
     
     final_clip = concatenate_videoclips(clips, method="compose")
@@ -178,6 +178,8 @@ def main(args):
     tcombine_video_end = time.time()  
     t_combine_video = tcombine_video_end - tcombine_video_start
     
+    shutil.move(combined_video_path,'.mp4')
+    print('The generated video is named:', combined_video_path+'.mp4')
 
 
     if not args.verbose:
@@ -208,7 +210,7 @@ if __name__ == '__main__':
     parser.add_argument("--pose_style", type=int, default=0, help="input pose style from [0, 46)")
     parser.add_argument("--batch_size", type=int, default=2, help="the batch size of facerender")
     parser.add_argument("--size", type=int, default=256, help="the image size of the facerender")
-    parser.add_argument("--expression_scale", type=float, default=1.0, help="a larger value will make the expression motion stronger (max 3.0).")
+    parser.add_argument("--expression_scale", type=float, default=1.5, help="a larger value will make the expression motion stronger (max 3.0).")
     parser.add_argument('--input_yaw', nargs='+', type=int, default=None, help="the input yaw degree of the user")
     parser.add_argument('--input_pitch', nargs='+', type=int, default=None, help="the input pitch degree of the user")
     parser.add_argument('--input_roll', nargs='+', type=int, default=None, help="the input roll degree of the user")

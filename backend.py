@@ -1,8 +1,7 @@
 import os
 import subprocess
 from flask import Flask, request, jsonify
-from werkzeug.utils import secure_filename
-import tempfile
+
 
 app = Flask(__name__)
 port = 5000
@@ -14,14 +13,9 @@ def doyentalker():
     # Extract parameters from JSON request
     message = data.get('message')
     lang = data.get('lang')
-    expression_scale = data.get('expression_scale')
-    still = data.get('still')
-    preprocess = data.get('preprocess')
-    
-    
+        
     voice = "assets/voice/ab_voice.mp3"
     avatar_image = "assets/avatar/male9.jpeg"
-
     
     # voice_folder = "assets/voice"
     # avatar_folder = "assets/avatar"
@@ -36,13 +30,12 @@ def doyentalker():
 
 
     # Execute your DoyenTalker logic here
-    result = execute_doyentalker(message, voice, lang, avatar_image, expression_scale, still, preprocess)
-
+    result = execute_doyentalker(message, voice, lang, avatar_image)
 
     return jsonify(result)
 
 
-def execute_doyentalker(message, voice, lang, avatar_image, expression_scale, still, preprocess):
+def execute_doyentalker(message, voice, lang, avatar_image):
     # Build command with provided arguments
     command = [
         "python", "main.py",
@@ -50,9 +43,6 @@ def execute_doyentalker(message, voice, lang, avatar_image, expression_scale, st
         "--lang", lang,
         "--voice", voice,
         "--avatar_image", avatar_image,
-        "--expression_scale", str(expression_scale),
-        "--still", str(still),
-        "--preprocess", preprocess,
     ]
     
     print("Command: ", command)
