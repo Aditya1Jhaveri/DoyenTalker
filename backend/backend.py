@@ -29,7 +29,7 @@ voice_extensions = ('.mp3', '.wav')
 
 
 def doyentalker():
-    data = request.get_json()
+    data = request.form
 
     # Extract parameters from form data
     message = data.get('message')
@@ -39,8 +39,8 @@ def doyentalker():
     
         
     # Get the uploaded files
-    user_audio_file = request.files.get('audio')
-    user_avatar = request.files.get('image')
+    user_audio_file = request.files.get('voice_name')
+    user_avatar = request.files.get('avatar_name')
     
     if user_audio_file:
         voice = os.path.join('uploads', user_audio_file.filename)

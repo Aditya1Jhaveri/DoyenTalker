@@ -1,0 +1,45 @@
+body {
+  background-color: #ffffff; /* Light background for the whole page */
+  color: black; /* Default text color */
+  margin: 0;
+  font-family: Arial, sans-serif;
+}
+
+h2 {
+  text-align: center;
+}
+
+.MuiContainer-root {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.MuiBox-root {
+  width: 100%;
+}
+
+.MuiFormControl-root {
+  margin-top: 16px;
+}
+
+.MuiButton-root {
+  min-width: 100px;
+}
+
+.MuiSelect-root,
+.MuiTextField-root {
+  background-color: white;
+  border-radius: 4px;
+}
+
+.MuiBox-root .output {
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 16px;
+  height: 150px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #e0e0e0;
+}
