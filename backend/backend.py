@@ -1,4 +1,5 @@
 import os
+import shutil
 import subprocess
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS, cross_origin
@@ -64,8 +65,10 @@ def doyentalker():
     # Execute your DoyenTalker logic here
     video_path = execute_doyentalker(message,voice, lang, avatar_image)
     
+    final_vid_path = os.path.join('results',os.path.basename(video_path))
+    
     if video_path:
-        return jsonify({"status": "success", "message": "Video generation successful.", "video_url": f"/video/{os.path.basename(video_path)}"})
+        return jsonify({"status": "success", "message": "Video generation successful.", "video_url": f"{(final_vid_path)}"})
     else:
         return jsonify({"status": "error", "message": "Video generation failed."})
 
@@ -75,8 +78,11 @@ app.config['CORS_HEADERS'] = 'Content-Type'
 app.config['UPLOAD_FOLDER'] = 'local'
 
 def execute_doyentalker(message, voice, lang, avatar_image):
-    # Define the path where the video will be saved
-    video_file_path = os.path.join('results', 'generated_video.mp4')
+    
+    final_path = os.path.join('..', 'frontend', 'src', 'results')
+
+    # Ensure the destination directory exists
+    os.makedirs(final_path,exist_ok=True)
 
     # Build command with provided arguments
     command = [
@@ -85,20 +91,17 @@ def execute_doyentalker(message, voice, lang, avatar_image):
         "--lang", lang,
         "--voice", voice,
         "--avatar_image", avatar_image,
-        "--output", video_file_path
+        "--result_dir", final_path
     ]
     print("Command: ", command)
     
     try:
         subprocess.run(command, check=True, cwd=os.path.dirname(__file__))
-        return video_file_path
+        return final_path
     except subprocess.CalledProcessError as e:
         print(f"Error running DoyenTalker: {e}")
         return None
 
-@app.route('/getvideo', methods=['GET'])
-def serve_video(filename):
-    return send_from_directory('results', filename)
 
 if __name__ == '__main__':
     app.run(port=port, debug=True)

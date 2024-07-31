@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { ReactMic } from "react-mic";
+import { useFormik } from "formik";
+import * as Yup from "yup";
 import {
   Container,
   Box,
@@ -17,56 +19,15 @@ import {
   Typography,
 } from "@mui/material";
 
-function App() {
-  const [avatarChoice, setAvatarChoice] = useState("predefined_avatar");
-  const [voiceChoice, setVoiceChoice] = useState("predefined_voice");
-  const [customAvatar, setCustomAvatar] = useState(null);
-  const [customAvatarName, setCustomAvatarName] = useState("");
-  const [voiceFile, setVoicefile] = useState(null);
-  const [voiceName, setVoicename] = useState("");
-  const [inputText, setInputText] = useState("");
-  const [languageAccent, setLanguageAccent] = useState("en");
-  const [selectedVoice, setSelectedVoice] = useState("trump_voice");
-  const [selectedAvatar, setSelectedAvatar] = useState("male1");
+import video from "./results/AB_social_media.mp4";
 
-  // States for ReactMic
-  const [record, setRecord] = useState(false);
+function App() {
   const [audioBlob, setAudioBlob] = useState(null);
   const [audioURL, setAudioURL] = useState("");
+  const [videoURL, setVideoURL] = useState("");
 
-  const handleStartRecording = () => setRecord(true);
-  const handleStopRecording = () => setRecord(false);
-
-  const handleData = (recordedBlob) => {
-    setAudioBlob(recordedBlob.blob);
-    setAudioURL(URL.createObjectURL(recordedBlob.blob));
-  };
-
-  // Convert audioBlob to a file
-  let audioFile = null;
-  if (audioBlob) {
-    audioFile = new File([audioBlob], "recorded_audio.wav", {
-      type: "audio/wav",
-    });
-  }
-
-  let avatar_name = "";
-
-  if (avatarChoice === "predefined_avatar") {
-    avatar_name = selectedAvatar;
-  } else {
-    avatar_name = customAvatar;
-  }
-
-  let voice_name = "";
-
-  if (voiceChoice === "voice_file") {
-    voice_name = voiceFile;
-  } else if (voiceChoice === "mic") {
-    voice_name = audioFile;
-  } else {
-    voice_name = selectedVoice;
-  }
+  const handleStartRecording = () => formik.setFieldValue("recording", true);
+  const handleStopRecording = () => formik.setFieldValue("recording", false);
 
   let speech =
     "Ladies and gentlemen,\n\n" +
@@ -80,45 +41,101 @@ function App() {
     "Let us work together to create an inclusive and equitable education system that nurtures the talents of every student, ensuring a brighter, more prosperous future for all.\n\n" +
     "Thank you.";
 
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    const formData = {
-      avatarChoice,
-      voiceChoice,
-      inputText,
-      languageAccent,
-      avatar_name,
-      voice_name,
-    };
-    console.log("Form data:", formData);
-    axios
-      .post(
-        "http://127.0.0.1:5000/doyentalker",
-        {
-          message: inputText,
-          lang: languageAccent,
-          voice_name: voice_name,
-          avatar_name: avatar_name,
-        },
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
+  const handleData = (recordedBlob) => {
+    setAudioBlob(recordedBlob.blob);
+    setAudioURL(URL.createObjectURL(recordedBlob.blob));
+    formik.setFieldValue(
+      "audioFile",
+      new File([audioBlob], "recorded_audio.wav", { type: "audio/wav" })
+    );
+  };
+
+  const formik = useFormik({
+    initialValues: {
+      avatarChoice: "predefined_avatar",
+      voiceChoice: "predefined_voice",
+      inputText: "",
+      languageAccent: "en",
+      selectedVoice: "trump_voice",
+      selectedAvatar: "male1",
+      customAvatar: null,
+      customAvatarName: "",
+      voiceFile: null,
+      voiceName: "",
+      recording: false,
+      audioFile: null,
+    },
+    validationSchema: Yup.object({
+      avatarChoice: Yup.string().required("Avatar choice is required"),
+      voiceChoice: Yup.string().required("Voice choice is required"),
+      inputText: Yup.string().required("Input text is required"),
+      languageAccent: Yup.string().required("Language accent is required"),
+      selectedVoice: Yup.string().required("Voice selection is required"),
+      selectedAvatar: Yup.string().required("Avatar selection is required"),
+    }),
+    onSubmit: (values) => {
+      console.log("Form data:", values);
+
+      let avatar_selected =
+        values.avatarChoice === "predefined_avatar"
+          ? values.selectedAvatar
+          : values.customAvatar;
+
+      let voice_selected =
+        values.voiceChoice === "voice_file"
+          ? values.voiceFile
+          : values.voiceChoice === "mic"
+          ? values.audioFile
+          : values.selectedVoice;
+
+      axios
+        .post(
+          "http://127.0.0.1:5000/doyentalker",
+          {
+            message: values.inputText,
+            lang: values.languageAccent,
+            voice_name: voice_selected,
+            avatar_name: avatar_selected,
           },
-        }
-      )
-      .then((response) => {
-        console.log("API response:", response);
-      })
-      .catch((error) => {
-        console.error("API error:", error);
-      });
+          {
+            headers: { "Content-Type": "multipart/form-data" },
+          }
+        )
+        .then((response) => {
+          console.log("API response:", response);
+          setVideoURL(response.data.video_url);
+        })
+        .catch((error) => {
+          console.error("API error:", error);
+        });
+    },
+  });
+
+  const handleSetTestVideo = () => {
+    const testVideoURL = video; // Replace with your test video URL
+    setVideoURL(testVideoURL);
+  };
+
+  const handleClear = () => {
+    formik.resetForm();
+    setAudioBlob(null);
+    setAudioURL("");
+    setVideoURL("");
   };
 
   return (
     <Container maxWidth="md">
-      <Box sx={{ bgcolor: "#f5f5f5", color: "black", p: 3, borderRadius: 2 }}>
+      <Box
+        sx={{
+          bgcolor: "#F5F5E1",
+          color: "black",
+          p: 3,
+          borderRadius: 2,
+          margin: 5,
+        }}
+      >
         <h2>DoyenTalker</h2>
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={formik.handleSubmit}>
           <FormControl component="fieldset" fullWidth>
             <FormLabel component="legend">
               How would you like to choose the Avatar?
@@ -127,13 +144,13 @@ function App() {
               row
               aria-label="avatar"
               name="avatarChoice"
-              value={avatarChoice}
-              onChange={(e) => setAvatarChoice(e.target.value)}
+              value={formik.values.avatarChoice}
+              onChange={formik.handleChange}
             >
               <FormControlLabel
                 value="predefined_avatar"
                 control={<Radio />}
-                label="Predefined Avatar"
+                label="Pre-defined Avatar"
               />
               <FormControlLabel
                 value="custom_avatar"
@@ -143,13 +160,20 @@ function App() {
             </RadioGroup>
           </FormControl>
 
-          {avatarChoice === "predefined_avatar" ? (
+          {formik.values.avatarChoice === "predefined_avatar" ? (
             <FormControl variant="filled" fullWidth sx={{ mt: 2 }}>
               <InputLabel>Select the Avatar</InputLabel>
               <Select
                 name="selectedAvatar"
-                value={selectedAvatar}
-                onChange={(e) => setSelectedAvatar(e.target.value)}
+                value={formik.values.selectedAvatar}
+                onChange={formik.handleChange}
+                error={
+                  formik.touched.selectedAvatar &&
+                  Boolean(formik.errors.selectedAvatar)
+                }
+                helperText={
+                  formik.touched.selectedAvatar && formik.errors.selectedAvatar
+                }
               >
                 <MenuItem value="male1">Male 1</MenuItem>
                 <MenuItem value="male2">Male 2</MenuItem>
@@ -160,6 +184,7 @@ function App() {
                 <MenuItem value="male7">Male 7</MenuItem>
                 <MenuItem value="male8">Male 8</MenuItem>
                 <MenuItem value="male9">Male 9</MenuItem>
+                <MenuItem value="male10">Male 10</MenuItem>
                 <MenuItem value="female1">Female 1</MenuItem>
                 <MenuItem value="female2">Female 2</MenuItem>
                 <MenuItem value="female3">Female 3</MenuItem>
@@ -169,31 +194,38 @@ function App() {
               </Select>
             </FormControl>
           ) : (
-            <Box sx={{ mt: 2, display: "flex", alignItems: "center" }}>
-              <Button
-                variant="contained"
-                component="label"
-                sx={{ bgcolor: "blue" }}
-              >
-                Upload Image
-                <input
-                  accept="image/*"
-                  type="file"
-                  hidden
-                  onChange={(event) => {
-                    const file = event.target.files[0];
-                    setCustomAvatar(file);
-                    setCustomAvatarName(file.name);
-                  }}
-                />
-              </Button>
-              {customAvatarName && (
-                <Typography variant="body1" sx={{ ml: 2 }}>
-                  {customAvatarName}
-                </Typography>
-              )}
-            </Box>
+            <>
+              <p style={{ color: "#6E6868" }}>
+                Upload the avatar image according to your choice
+              </p>
+              <Box sx={{ mt: 2, display: "flex", alignItems: "center" }}>
+                <Button
+                  variant="contained"
+                  component="label"
+                  sx={{ bgcolor: "blue" }}
+                >
+                  Upload Avatar
+                  <input
+                    accept="image/*"
+                    type="file"
+                    hidden
+                    onChange={(event) => {
+                      const file = event.target.files[0];
+                      formik.setFieldValue("customAvatar", file);
+                      formik.setFieldValue("customAvatarName", file.name);
+                    }}
+                  />
+                </Button>
+                {formik.values.customAvatarName && (
+                  <Typography variant="body1" sx={{ ml: 2 }}>
+                    {formik.values.customAvatarName}
+                  </Typography>
+                )}
+              </Box>
+            </>
           )}
+
+          <hr style={{ marginTop: 20 }} />
 
           <FormControl component="fieldset" fullWidth sx={{ mt: 2 }}>
             <FormLabel component="legend">
@@ -203,13 +235,13 @@ function App() {
               row
               aria-label="voice"
               name="voiceChoice"
-              value={voiceChoice}
-              onChange={(e) => setVoiceChoice(e.target.value)}
+              value={formik.values.voiceChoice}
+              onChange={formik.handleChange}
             >
               <FormControlLabel
                 value="predefined_voice"
                 control={<Radio />}
-                label="Predefined Voice"
+                label="Pre-defined Voice"
               />
               <FormControlLabel value="mic" control={<Radio />} label="Mic" />
               <FormControlLabel
@@ -220,18 +252,26 @@ function App() {
             </RadioGroup>
           </FormControl>
 
-          {voiceChoice === "predefined_voice" && (
+          {formik.values.voiceChoice === "predefined_voice" && (
             <FormControl variant="filled" fullWidth sx={{ mt: 2 }}>
               <InputLabel>Select Voice</InputLabel>
               <Select
                 name="selectedVoice"
-                value={selectedVoice}
-                onChange={(e) => setSelectedVoice(e.target.value)}
+                value={formik.values.selectedVoice}
+                onChange={formik.handleChange}
+                error={
+                  formik.touched.selectedVoice &&
+                  Boolean(formik.errors.selectedVoice)
+                }
+                helperText={
+                  formik.touched.selectedVoice && formik.errors.selectedVoice
+                }
               >
                 <MenuItem value="trump_voice">Trump Voice</MenuItem>
-                <MenuItem value="ab_voice">Amitabh Bachchan Voice</MenuItem>
+                <MenuItem value="PC_voice">Michelle Obama Voice</MenuItem>
                 <MenuItem value="beyonce_voice">Beyonce Voice</MenuItem>
-                <MenuItem value="emma_waston_voice">Emma Waston Voice</MenuItem>
+                <MenuItem value="emma_waston_voice">Emma Watson Voice</MenuItem>
+                <MenuItem value="ab_voice">Amitabh Bachchan Voice</MenuItem>
                 <MenuItem value="modi_voice">Modi Voice</MenuItem>
                 <MenuItem value="srk_voice">SRK Voice</MenuItem>
                 <MenuItem value="PC_voice">Priyanka Chopra Voice</MenuItem>
@@ -239,19 +279,33 @@ function App() {
             </FormControl>
           )}
 
-          {voiceChoice === "mic" && (
+          {formik.values.voiceChoice === "mic" && (
             <Box sx={{ mt: 2 }}>
-              <Typography variant="body1" sx={{ ml: 2 }}>
+              <p style={{ color: "#6E6868" }}>
+                Read the text below to clone your voice
+              </p>
+              <Typography variant="body1" sx={{ mb: 2 }} align="justify">
                 {speech}
               </Typography>
-              <ReactMic record={record} onStop={handleData} />
+              <div style={{ display: "flex", flexDirection: "column" }}>
+                <ReactMic
+                  record={formik.values.recording}
+                  onStop={handleData}
+                />
+              </div>
+
               <Box
-                sx={{ mt: 2, display: "flex", justifyContent: "space-between" }}
+                sx={{
+                  mt: 2,
+                  display: "flex",
+                  justifyContent: "space-between",
+                }}
               >
                 <Button
                   onClick={handleStartRecording}
                   variant="contained"
                   color="primary"
+                  className=""
                 >
                   Start Recording
                 </Button>
@@ -263,60 +317,73 @@ function App() {
                   Stop Recording
                 </Button>
               </Box>
+
               {audioURL && (
                 <audio controls src={audioURL} style={{ marginTop: "10px" }} />
               )}
             </Box>
           )}
 
-          {voiceChoice === "voice_file" && (
-            <Box sx={{ mt: 2, display: "flex", alignItems: "center" }}>
-              <Button
-                variant="contained"
-                component="label"
-                sx={{ bgcolor: "blue" }}
-              >
-                Upload Voice File
-                <input
-                  accept=".mp3, .wav"
-                  type="file"
-                  hidden
-                  onChange={(event) => {
-                    const file = event.target.files[0];
-                    setVoicefile(file);
-                    setVoicename(file.name);
-                  }}
-                />
-              </Button>
-              {voiceName && (
-                <Typography variant="body1" sx={{ ml: 2 }}>
-                  {voiceName}
-                </Typography>
-              )}
-            </Box>
+          {formik.values.voiceChoice === "voice_file" && (
+            <>
+              <p style={{ color: "#6E6868" }}>
+                Upload the voice file according to your choice
+              </p>
+
+              <Box sx={{ mt: 2, display: "flex", alignItems: "center" }}>
+                <Button
+                  variant="contained"
+                  component="label"
+                  sx={{ bgcolor: "blue" }}
+                >
+                  Upload Voice
+                  <input
+                    accept="audio/*"
+                    type="file"
+                    hidden
+                    onChange={(event) => {
+                      const file = event.target.files[0];
+                      formik.setFieldValue("voiceFile", file);
+                      formik.setFieldValue("voiceName", file.name);
+                    }}
+                  />
+                </Button>
+                {formik.values.voiceName && (
+                  <Typography variant="body1" sx={{ ml: 2 }}>
+                    {formik.values.voiceName}
+                  </Typography>
+                )}
+              </Box>
+            </>
           )}
+          <hr style={{ marginTop: 20 }} />
 
           <Box sx={{ mt: 3 }}>
             <TextField
               label="Input Text"
-              variant="outlined"
+              name="inputText"
+              variant="filled"
               placeholder="Enter the text you want to generate for speech"
               multiline
               rows={4}
               fullWidth
-              sx={{ bgcolor: "white", borderRadius: 1 }}
-              name="inputText"
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
+              value={formik.values.inputText}
+              onChange={formik.handleChange}
+              error={
+                formik.touched.inputText && Boolean(formik.errors.inputText)
+              }
+              helperText={formik.touched.inputText && formik.errors.inputText}
             />
           </Box>
+
+          <hr style={{ marginTop: 20 }} />
 
           <FormControl variant="filled" fullWidth sx={{ mt: 2 }}>
             <InputLabel>Select the language accent of speaker</InputLabel>
             <Select
               name="languageAccent"
-              value={languageAccent}
-              onChange={(e) => setLanguageAccent(e.target.value)}
+              value={formik.values.languageAccent}
+              onChange={formik.handleChange}
             >
               <MenuItem value="en">English</MenuItem>
               <MenuItem value="es">Spanish</MenuItem>
@@ -338,13 +405,46 @@ function App() {
             </Select>
           </FormControl>
 
-          <Box sx={{ mt: 3, display: "flex", justifyContent: "space-between" }}>
-            <Button type="submit" variant="contained" color="primary">
+          <Box sx={{ mt: 2, display: "flex", justifyContent: "space-between" }}>
+            <Button
+              type="button"
+              color="error"
+              variant="contained"
+              onClick={handleClear}
+            >
+              Clear
+            </Button>
+            <Button type="submit" color="success" variant="contained">
               Submit
             </Button>
+            <Button
+              type="button"
+              color="primary"
+              variant="contained"
+              onClick={handleSetTestVideo}
+            >
+              test
+            </Button>
           </Box>
+          {videoURL && (
+            <Box
+              sx={{
+                mt: 3,
+                border: "1px solid #ccc",
+                borderRadius: 1,
+                p: 2,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                bgcolor: "#e0e0e0",
+              }}
+            >
+              <Typography variant="h6">Generated Video:</Typography>
+              <video src={videoURL} controls width="100%" />
+            </Box>
+          )}
 
-          <Box
+          {/* <Box
             sx={{
               mt: 3,
               border: "1px solid #ccc",
@@ -358,7 +458,7 @@ function App() {
             }}
           >
             <p>Output</p>
-          </Box>
+          </Box> */}
         </form>
       </Box>
     </Container>

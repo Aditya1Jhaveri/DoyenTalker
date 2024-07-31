@@ -39,9 +39,10 @@ def main(args):
 
     input_voice = args.voice
     input_lang = args.lang
-
-    path = os.path.join(args.result_dir, str(int(time.time())))
-    path_id = path
+    
+    path_id = str(int(time.time()))
+    path = os.path.join(args.result_dir,path_id )
+    
     print("path_id:", path_id, "path:", path)
     os.makedirs(path, exist_ok=True)
     
@@ -169,7 +170,7 @@ def main(args):
     
     # Combine all video files
     tcombine_video_start = time.time()  
-    combined_video_path = os.path.join(save_dir,"combined_generated_video.mp4")
+    combined_video_path = os.path.join(save_dir, path_id + ".mp4")
     clips = [VideoFileClip(v) for v in video_files]
     
     final_clip = concatenate_videoclips(clips, method="compose")
