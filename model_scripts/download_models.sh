@@ -2,9 +2,9 @@ mkdir ./checkpoints
 
 
 #### Model links from google drive.
-gdown --id 1x5EW6kIhgC72Jj0yod3hUPQYPF6ARxvq -O ./checkpoints/doyenTalker_V0.0.2_256.safetensors
-gdown --id 1C-Bp2O-YvlDZKZHbVwDHTYslpGLvml0Q -O ./checkpoints/mapping_00229-model.pth
-gdown --id 1nYFblibZUZ9jZDl5n0vI0AMnhK8-i9Nq -O  ./checkpoints/mapping_00109-model.pth.tar
+gdown 12MmoyH-UUQTQr3WOZXSXD3HV10iwUoba -O ./checkpoints/doyenTalker_V0.0.2_256.safetensors
+gdown 1_IaiMJ3q3noEWqJmjXemHFx77byymZMh -O ./checkpoints/mapping_00229-model.pth
+gdown 1gR4l5leM5mfKKeSOWtY6wplFikxGehgX -O ./checkpoints/mapping_00109-model.pth.tar
 
 ### enhancer 
 mkdir -p ./gfpgan/weights

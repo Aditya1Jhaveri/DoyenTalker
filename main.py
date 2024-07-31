@@ -178,8 +178,8 @@ def main(args):
     tcombine_video_end = time.time()  
     t_combine_video = tcombine_video_end - tcombine_video_start
     
-    shutil.move(combined_video_path)
-    print('The generated video is named:', combined_video_path+'.mp4')
+    shutil.move(combined_video_path,args.result_dir)
+    print('The generated video is named:', combined_video_path)
 
 
     if not args.verbose:

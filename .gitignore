@@ -21,6 +21,8 @@ share
 Lib
 Library
 checkpoints
+uploads
+results
 scripts
 pyvenv.cfg
 CACHEDIR.TAG
