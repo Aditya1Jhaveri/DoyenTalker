@@ -1,7 +1,7 @@
 import os
-import shutil
+# import shutil
 import subprocess
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify 
 from flask_cors import CORS, cross_origin
 
 
@@ -9,12 +9,8 @@ app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes in the app
 port = 5000
 
-# Ensure the 'uploads' and 'results' directories exist
-if not os.path.exists('uploads'):
-    os.makedirs('uploads')
-
-if not os.path.exists('results'):
-    os.makedirs('results')
+# Ensure the 'uploads' directories exist
+os.makedirs('uploads',exist_ok=True)
 
 
 voice_folder = "assets/voice"
@@ -26,8 +22,6 @@ voice_extensions = ('.mp3', '.wav')
 
 @app.route('/doyentalker', methods=['POST'])
 @cross_origin()
-
-
 
 def doyentalker():
     data = request.form
@@ -49,7 +43,7 @@ def doyentalker():
     elif voice_name:
         voice = next((os.path.join(voice_folder, f) for f in os.listdir(voice_folder) if f.startswith(voice_name) and f.endswith(voice_extensions)), '')
     else:
-        return jsonify({"status": "error", "message": "No audio provided."})
+        return jsonify({"status": "error", "message": "No audio provided."}), 400
     
 
     if user_avatar:
@@ -58,9 +52,8 @@ def doyentalker():
     elif avatar_name:
         avatar_image = next((os.path.join(avatar_folder, f) for f in os.listdir(avatar_folder) if f.startswith(avatar_name) and f.endswith(image_extensions)), '')
     else:
-        return jsonify({"status": "error", "message": "No image provided."})
+        return jsonify({"status": "error", "message": "No image provided."}), 400
     
-    # print("Response: ", data)
    
     # Execute your DoyenTalker logic here
     video_path = execute_doyentalker(message,voice, lang, avatar_image)
@@ -70,12 +63,11 @@ def doyentalker():
     if video_path:
         return jsonify({"status": "success", "message": "Video generation successful.", "video_url": f"{(final_vid_path)}"})
     else:
-        return jsonify({"status": "error", "message": "Video generation failed."})
+        return jsonify({"status": "error", "message": "Video generation failed."}), 400
 
 
 cors = CORS(app, origins="*")
-app.config['CORS_HEADERS'] = 'Content-Type'
-app.config['UPLOAD_FOLDER'] = 'local'
+
 
 def execute_doyentalker(message, voice, lang, avatar_image):
     

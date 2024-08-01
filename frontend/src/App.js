@@ -112,7 +112,7 @@ function App() {
   });
 
   const handleSetTestVideo = () => {
-    const testVideoURL = video; // Replace with your test video URL
+    const testVideoURL = video;
     setVideoURL(testVideoURL);
   };
 
@@ -162,7 +162,7 @@ function App() {
 
           {formik.values.avatarChoice === "predefined_avatar" ? (
             <FormControl variant="filled" fullWidth sx={{ mt: 2 }}>
-              <InputLabel>Select the Avatar</InputLabel>
+              <InputLabel>Select Avatar</InputLabel>
               <Select
                 name="selectedAvatar"
                 value={formik.values.selectedAvatar}
@@ -443,22 +443,6 @@ function App() {
               <video src={videoURL} controls width="100%" />
             </Box>
           )}
-
-          {/* <Box
-            sx={{
-              mt: 3,
-              border: "1px solid #ccc",
-              borderRadius: 1,
-              p: 2,
-              height: "150px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              bgcolor: "#e0e0e0",
-            }}
-          >
-            <p>Output</p>
-          </Box> */}
         </form>
       </Box>
     </Container>

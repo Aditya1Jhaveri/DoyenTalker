@@ -27,3 +27,4 @@ torchvision
 torchaudio
 ffmpeg
 flask_cors
+flask
