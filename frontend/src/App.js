@@ -18,8 +18,9 @@ import {
   InputLabel,
   Typography,
 } from "@mui/material";
+import LoadingScreen from "./LoadingScreen";
 
-import video from "./results/AB_social_media.mp4";
+// import video from "./results/1722849505.mp4";
 
 function App() {
   const [audioBlob, setAudioBlob] = useState(null);
@@ -28,6 +29,7 @@ function App() {
 
   const handleStartRecording = () => formik.setFieldValue("recording", true);
   const handleStopRecording = () => formik.setFieldValue("recording", false);
+  const [loading, setLoading] = useState(false);
 
   let speech =
     "Ladies and gentlemen,\n\n" +
@@ -48,6 +50,25 @@ function App() {
       "audioFile",
       new File([audioBlob], "recorded_audio.wav", { type: "audio/wav" })
     );
+  };
+
+  const base64ToBlob = (base64, mimeType) => {
+    const byteCharacters = atob(base64);
+    const byteArrays = [];
+
+    for (let offset = 0; offset < byteCharacters.length; offset += 512) {
+      const slice = byteCharacters.slice(offset, offset + 512);
+      const byteNumbers = new Array(slice.length);
+
+      for (let i = 0; i < slice.length; i++) {
+        byteNumbers[i] = slice.charCodeAt(i);
+      }
+
+      const byteArray = new Uint8Array(byteNumbers);
+      byteArrays.push(byteArray);
+    }
+
+    return new Blob(byteArrays, { type: mimeType });
   };
 
   const formik = useFormik({
@@ -75,6 +96,7 @@ function App() {
     }),
     onSubmit: (values) => {
       console.log("Form data:", values);
+      setLoading(true);
 
       let avatar_selected =
         values.avatarChoice === "predefined_avatar"
@@ -101,9 +123,16 @@ function App() {
             headers: { "Content-Type": "multipart/form-data" },
           }
         )
+
         .then((response) => {
           console.log("API response:", response);
-          setVideoURL(response.data.video_url);
+          const videoBase64 = response.data.video_url;
+          const videoBlob = base64ToBlob(videoBase64, "video/mp4");
+          const url = URL.createObjectURL(videoBlob);
+          console.log("video:", url);
+
+          setVideoURL(url);
+          setLoading(false);
         })
         .catch((error) => {
           console.error("API error:", error);
@@ -111,10 +140,11 @@ function App() {
     },
   });
 
-  const handleSetTestVideo = () => {
-    const testVideoURL = video;
-    setVideoURL(testVideoURL);
-  };
+  // const handleSetTestVideo = () => {
+  //   const testVideoURL = video; // Replace with your test video URL
+  //   setVideoURL(testVideoURL);
+  //   console.log("test:" ,testVideoURL);
+  // };
 
   const handleClear = () => {
     formik.resetForm();
@@ -417,14 +447,14 @@ function App() {
             <Button type="submit" color="success" variant="contained">
               Submit
             </Button>
-            <Button
+            {/* <Button
               type="button"
               color="primary"
               variant="contained"
               onClick={handleSetTestVideo}
             >
               test
-            </Button>
+            </Button> */}
           </Box>
           {videoURL && (
             <Box
@@ -440,11 +470,12 @@ function App() {
               }}
             >
               <Typography variant="h6">Generated Video:</Typography>
-              <video src={videoURL} controls width="100%" />
+              <video src={videoURL} controls width="100%" type="video/mp4" />
             </Box>
           )}
         </form>
       </Box>
+      {loading && <LoadingScreen />}
     </Container>
   );
 }

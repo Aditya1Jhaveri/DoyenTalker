@@ -25,23 +25,24 @@ def split_text(text, max_words=100):
 def main(args):
     tstart = time.time()
     
-    # Function to read the content of the message file
-    def read_message_from_file(file_path):
-        with open(file_path, 'r') as file:
-            return file.read()
+    # # Function to read the content of the message file
+    # def read_message_from_file(file_path):
+    #     with open(file_path, 'r') as file:
+    #         return file.read()
 
-    # Initialize variables
-    message = None
+    # # Initialize variables
+    # message = None
 
-    # Conditionally read the message file
-    if args.message_file:
-        message = read_message_from_file(args.message_file)
+    # # Conditionally read the message file
+    # if args.message_file:
+    #     message = read_message_from_file(args.message_file)
 
     input_voice = args.voice
     input_lang = args.lang
+    message = args.message_file
     
     path_id = str(int(time.time()))
-    path = os.path.join(args.result_dir,path_id )
+    path = os.path.join(args.result_dir,path_id)
     
     print("path_id:", path_id, "path:", path)
     os.makedirs(path, exist_ok=True)
@@ -137,6 +138,8 @@ def main(args):
     else:
         ref_pose_coeff_path = None
         
+    # coeff2video
+    tanimate_start = time.time()
     
     # Process each audio file
     for i, audio_path in enumerate(audio_files):
@@ -149,8 +152,6 @@ def main(args):
             from src.face3d.visualize import gen_composed_video
             gen_composed_video(args, device, first_coeff_path, coeff_path, audio_path, os.path.join(save_dir, f'3dface_part_{i + 1}.mp4'))
         
-        # coeff2video
-        tanimate_start = time.time()
         
         data = get_facerender_data(coeff_path, crop_pic_path, first_coeff_path, audio_path,
                                    batch_size, input_yaw_list, input_pitch_list, input_roll_list,
